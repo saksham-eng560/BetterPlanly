@@ -26,7 +26,28 @@ You bring tasks in from Notion, or from a plan file that any AI assistant can wr
   - Each change is a change set with before/after snapshots, and the history panel can undo any of them.
   - Export writes a plan file that imports back losslessly.
 
-## Quick start (Docker)
+## Run it on your machine
+
+Everything runs locally: your Postgres, and the model on your own GPU or CPU through Ollama. Nothing is sent to a cloud service.
+
+1. Install [Ollama](https://ollama.com/download), Node.js 20+, Python 3.12+ (or [uv](https://docs.astral.sh/uv/)), and either PostgreSQL or Docker.
+2. Start Planly:
+
+```bash
+make start
+```
+
+The first run installs dependencies, creates the `planly` database and downloads the model (`qwen2.5:7b`, about 4.7 GB). After that it starts in a few seconds and opens <http://localhost:5173>. Ctrl-C stops everything it started.
+
+| Your machine | Model | Start with |
+|---|---|---|
+| 8 GB RAM | `qwen2.5:3b` | `PLANLY_MODEL=qwen2.5:3b make start` |
+| 16 GB RAM, or a GPU with 8 GB+ | `qwen2.5:7b` (default) | `make start` |
+| 32 GB+ RAM, or a GPU with 16 GB+ | `qwen2.5:14b` | `PLANLY_MODEL=qwen2.5:14b make start` |
+
+Ollama uses Apple Silicon (Metal) and NVIDIA (CUDA) GPUs automatically. On CPU only, replies take much longer: a 3B model on 2 cores took about 2½ minutes per agent run in testing. The model you pick is saved in `backend/.env`.
+
+## Or with Docker
 
 ```bash
 docker compose up --build
@@ -81,6 +102,7 @@ Configuration lives in `backend/.env` (copy it from [`backend/.env.example`](bac
 | `DATABASE_URL` | `postgresql://planly:planly@localhost:5432/planly` | |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | |
 | `OLLAMA_MODEL` | `qwen2.5:7b` | Any Ollama model with tool calling |
+| `OLLAMA_NUM_CTX` | `8192` | Model context window in tokens. Ollama's 4096 default cuts off the agent's instructions once a conversation builds up |
 | `NOTION_TOKEN` | — | Turns on Notion sync ([setup](docs/PLAN_FORMAT.md#live-sync-notion-api)) |
 | `WEB_SEARCH_ENABLED` | `false` | Lets the agent search DuckDuckGo for resources |
 

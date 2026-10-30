@@ -48,7 +48,12 @@ class AgentBusy(RuntimeError):
 def make_ollama(settings: Settings) -> BaseChatModel:
     from langchain_ollama import ChatOllama
 
-    return ChatOllama(model=settings.ollama_model, base_url=settings.ollama_base_url, temperature=0.2)
+    return ChatOllama(
+        model=settings.ollama_model,
+        base_url=settings.ollama_base_url,
+        temperature=0.2,
+        num_ctx=settings.ollama_num_ctx,
+    )
 
 
 class AgentRuntime:

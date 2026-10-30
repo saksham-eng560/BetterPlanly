@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://planly:planly@localhost:5432/planly"
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:7b"
+    ollama_num_ctx: int = 8192  # Ollama's 4096 default truncates the agent prompt once history builds up
     notion_token: str | None = None
     web_search_enabled: bool = False
     day_start: time = time(8, 0)

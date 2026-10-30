@@ -1,7 +1,10 @@
 # Local development. Needs Python 3.12+, Node 22, PostgreSQL 16 and (for the agent) Ollama.
 PY := backend/.venv/bin/python
 
-.PHONY: setup db migrate backend frontend fake-ollama test e2e build up
+.PHONY: start setup db migrate backend frontend fake-ollama test e2e build up
+
+start:  ## run everything on this machine (installs on first run) → http://localhost:5173
+	scripts/start.sh
 
 setup:  ## create the Python venv and install both apps
 	python3 -m venv backend/.venv
