@@ -8,6 +8,8 @@ import { Sheet } from "../../components/primitives";
 import { toast } from "../../components/toasts";
 import { ApiError, type ImportResult, api } from "../../lib/api";
 
+import { type PickedFile, filesFromDrop, filesFromList } from "./collectFiles";
+
 import "./import.css";
 
 type Tab = "file" | "notion" | "prompt";
@@ -37,6 +39,7 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
   const [copied, setCopied] = useState(false);
   const [databaseId, setDatabaseId] = useState("");
   const input = useRef<HTMLInputElement>(null);
+  const folderInput = useRef<HTMLInputElement>(null);
 
   async function run(action: () => Promise<ImportResult>) {
     setBusy(true);
@@ -58,7 +61,13 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
     }
   }
 
-  const upload = (file: File | undefined) => file && run(() => api.importFile(file));
+  const upload = (files: PickedFile[]) => {
+    if (!files.length) {
+      setErrors(["No plan files there. Drop the .zip from Notion, or the folder it was unzipped into."]);
+      return;
+    }
+    return run(() => api.importFiles(files));
+  };
 
   return (
     <Sheet open={open} onClose={onClose} title="Import tasks" wide>
@@ -83,20 +92,41 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
               data-dragging={dragging || undefined}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
-              onDrop={(e) => { e.preventDefault(); setDragging(false); void upload(e.dataTransfer.files[0]); }}
+              onDrop={async (e) => {
+                e.preventDefault();
+                setDragging(false);
+                await upload(await filesFromDrop(e.dataTransfer));
+              }}
             >
               <FileUp size={36} strokeWidth={1.5} aria-hidden="true" />
-              <p className="drop-title">Drop a plan file here</p>
-              <p className="drop-hint">A whole Notion export (.zip), a Notion page (.md), a Notion CSV, or a Planly JSON/YAML plan</p>
-              <button className="btn btn-filled" disabled={busy} onClick={() => input.current?.click()}>
-                {busy ? "Importing…" : "Choose File…"}
-              </button>
+              <p className="drop-title">Drop your Notion export here</p>
+              <p className="drop-hint">
+                The .zip, or the folder your Mac unzipped it into. Single pages (.md), Notion CSVs and Planly JSON/YAML plans work too.
+              </p>
+              <div className="drop-actions">
+                <button className="btn btn-filled" disabled={busy} onClick={() => folderInput.current?.click()}>
+                  {busy ? "Importing…" : "Choose Folder…"}
+                </button>
+                <button className="btn btn-gray" disabled={busy} onClick={() => input.current?.click()}>
+                  Choose Files…
+                </button>
+              </div>
               <input
                 ref={input}
                 type="file"
                 hidden
+                multiple
+                aria-label="Plan files"
                 accept=".zip,.json,.yaml,.yml,.md,.markdown,.csv"
-                onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }}
+                onChange={(e) => { void upload(filesFromList(e.target.files)); e.target.value = ""; }}
+              />
+              <input
+                ref={folderInput}
+                type="file"
+                hidden
+                aria-label="Exported folder"
+                {...{ webkitdirectory: "", directory: "" }}
+                onChange={(e) => { void upload(filesFromList(e.target.files)); e.target.value = ""; }}
               />
             </div>
           </>

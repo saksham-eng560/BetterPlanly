@@ -16,7 +16,7 @@ test("import a plan, see the day, tick, move, ask the agent", async ({ page }) =
   // import the sample plan through the sheet
   await page.getByRole("button", { name: "Import" }).click();
   const chooser = page.waitForEvent("filechooser");
-  await page.getByRole("button", { name: "Choose File…" }).click();
+  await page.getByRole("button", { name: "Choose Files…" }).click();
   await (await chooser).setFiles(path.join(ROOT, "examples", "sample-plan.json"));
   await expect(page.getByRole("status").filter({ hasText: "Late October sprint" }).first()).toBeVisible();
   await page.screenshot({ path: path.join(SHOTS, "import.png") });
@@ -78,7 +78,7 @@ test("a Notion week page becomes one widget box per section", async ({ page, bro
   await open(page);
   await page.getByRole("button", { name: "Import" }).click();
   const chooser = page.waitForEvent("filechooser");
-  await page.getByRole("button", { name: "Choose File…" }).click();
+  await page.getByRole("button", { name: "Choose Files…" }).click();
   await (await chooser).setFiles(path.join(ROOT, "backend", "tests", "fixtures", "notion-week.md"));
   await expect(page.locator(".import-result")).toContainText("33 new");
   await page.getByRole("button", { name: "Close" }).click();
@@ -110,4 +110,42 @@ test("a Notion week page becomes one widget box per section", async ({ page, bro
     await showChecklist(other);
     await other.screenshot({ path: path.join(SHOTS, name) });
   }
+});
+
+test("an unzipped Notion export imports in one go", async ({ page }, info) => {
+  const fs = await import("node:fs");
+  const fixtures = path.join(ROOT, "backend", "tests", "fixtures");
+  const week3 = info.outputPath("Week 3 FastAPI 40290067e9e181b5.md");
+  fs.writeFileSync(week3, fs.readFileSync(path.join(fixtures, "notion-week.md"), "utf8").replace("Week 2", "Week 3"));
+
+  await open(page);
+  await page.getByRole("button", { name: "Import" }).click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose Files…" }).click();
+  await (await chooser).setFiles([path.join(fixtures, "notion-top-page.md"), path.join(fixtures, "notion-week.md"), week3]);
+  const result = page.locator(".import-result");
+  await expect(result).toContainText("2 pages");
+  await expect(result).toContainText("skipped 1");
+});
+
+test("choosing the unzipped export folder imports every week", async ({ page }, info) => {
+  const fs = await import("node:fs");
+  const fixtures = path.join(ROOT, "backend", "tests", "fixtures");
+  const folder = info.outputPath("Export-unzipped");
+  const weeks = path.join(folder, "AIML DEV & LC CF");
+  fs.mkdirSync(path.join(weeks, "Week 2 HTTP 40290067e9e181f6"), { recursive: true });
+  fs.copyFileSync(path.join(fixtures, "notion-top-page.md"), path.join(folder, "AIML DEV & LC CF 40290067e9e1803e.md"));
+  fs.copyFileSync(path.join(fixtures, "notion-week.md"), path.join(weeks, "Week 4 HTTP 40290067e9e181f6.md"));
+  fs.writeFileSync(path.join(weeks, "Week 5 RAG 40290067e9e181b6.md"),
+    fs.readFileSync(path.join(fixtures, "notion-week.md"), "utf8").replace("Week 2", "Week 5"));
+  fs.writeFileSync(path.join(weeks, "Week 2 HTTP 40290067e9e181f6", "diagram.png"), "not a plan");
+
+  await open(page);
+  await page.getByRole("button", { name: "Import" }).click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose Folder…" }).click();
+  await (await chooser).setFiles(folder);
+  const result = page.locator(".import-result");
+  await expect(result).toContainText("2 pages");
+  await expect(result).toContainText("skipped 1");
 });

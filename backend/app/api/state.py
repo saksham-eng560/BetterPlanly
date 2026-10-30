@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.api.deps import AppSettings, Runtime, Service, Session
@@ -11,7 +11,7 @@ from app.importers import (
     MAX_UPLOAD_BYTES,
     dump_plan,
     fetch_notion_database,
-    parse_archive,
+    parse_many,
     parse_upload,
     persist_drafts,
 )
@@ -47,12 +47,28 @@ async def _persist(session, drafts, skipped: list[str] | None = None) -> ImportO
 
 
 @router.post("/imports/file", response_model=ImportOut, tags=["import"])
-async def import_file(file: UploadFile, session: Session):
-    name = file.filename or "upload"
-    if name.lower().endswith(".zip"):  # a whole Notion export: every page at once
-        drafts, skipped = parse_archive(name, await file.read(MAX_ARCHIVE_BYTES + 1))
-        return await _persist(session, drafts, skipped)
-    return await _persist(session, [parse_upload(name, await file.read(MAX_UPLOAD_BYTES + 1))])
+async def import_file(
+    session: Session,
+    file: UploadFile | None = None,
+    files: list[UploadFile] = File(default=[]),
+):
+    """One plan file, a .zip export, or many files at once (a dropped folder) — always one Change set."""
+    uploads = [u for u in [file, *files] if u is not None]
+    if not uploads:
+        raise HTTPException(422, "Attach a file.")
+    if len(uploads) == 1 and not (uploads[0].filename or "").lower().endswith(".zip"):
+        upload = uploads[0]
+        return await _persist(session, [parse_upload(upload.filename or "upload", await upload.read(MAX_UPLOAD_BYTES + 1))])
+    contents, total = [], 0
+    for upload in uploads:
+        data = await upload.read(MAX_ARCHIVE_BYTES + 1)
+        total += len(data)
+        if total > MAX_ARCHIVE_BYTES:
+            raise HTTPException(413, f"The upload is larger than {MAX_ARCHIVE_BYTES // 2**20} MB")
+        contents.append((upload.filename or "upload", data))
+    label = uploads[0].filename if len(uploads) == 1 else f"the {len(uploads)} files"
+    drafts, skipped = parse_many(contents, label=label or "the upload")
+    return await _persist(session, drafts, skipped)
 
 
 @router.post("/imports/notion", response_model=ImportOut, tags=["import"])

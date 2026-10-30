@@ -81,12 +81,18 @@ Export (`GET /api/export`) writes this same format, so an export always imports 
 - **Types.** Sections mentioning LeetCode or problems give `study` tasks tagged `dsa`; AIML, dev, study or learning sections give `study`.
 - **Ignored.** Plain bullets and links outside a task, such as video lists or a weekly-review form, are left out.
 
-**Importing everything at once.** Open the parent page (for example the roadmap page that lists every week), choose **⋯ → Export**, pick **Markdown & CSV**, turn on **Include subpages**, and export. Drop the downloaded `.zip` on Import as it is, without unzipping it:
+**Importing everything at once.** Open the parent page (for example the roadmap page that lists every week), choose **⋯ → Export**, pick **Markdown & CSV**, turn on **Include subpages**, and export. Then import it in one of these ways:
+
+- **The `.zip`:** drop it on Import as it is.
+- **An unzipped folder:** Safari unzips downloads by default ("Open safe files after downloading"). In that case use **Choose Folder…** and pick the folder it created, or drag that folder onto Import.
+
+Either way:
 
 - Every page with checkboxes becomes its own Plan, all in one Change set, so one Undo reverts the whole import.
 - Pages without tasks, images and other files are skipped. The result says how many.
 - Nested zips, which Notion uses for large exports, are read too.
-- Exporting again later and dropping the new zip updates every page in place.
+- Exporting again later and importing the new export updates every page in place.
+- If you drop only the export's top page (the overview page that links to the weeks), Planly explains that the weeks are separate files and asks for the whole folder or zip.
 - Limits: 100 MB per zip, 2 MB per page and 30 MB of pages in total.
 
 To import a single week instead, export just that page and drop its `.md` file.

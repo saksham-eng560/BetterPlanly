@@ -40,46 +40,63 @@ def parse_upload(filename: str, content: bytes, today: date | None = None) -> Pl
     raise PlanParseError(f"Unsupported file type {extension or '(none)'}; use {', '.join(SUPPORTED_EXTENSIONS)}")
 
 
-def parse_archive(filename: str, content: bytes, today: date | None = None) -> tuple[list[PlanDraft], list[str]]:
-    """Every plan file in a .zip (e.g. a Notion export with subpages, which may nest zips).
-    Returns the drafts and the names of files that were skipped (no tasks, not readable)."""
-    if len(content) > MAX_ARCHIVE_BYTES:
-        raise PlanParseError(f"{filename} is larger than {MAX_ARCHIVE_BYTES // 2**20} MB")
+def parse_many(
+    files: list[tuple[str, bytes]], today: date | None = None, label: str = "the upload"
+) -> tuple[list[PlanDraft], list[str]]:
+    """Every plan file among `files`: a dropped folder, several selected files, or .zip exports
+    (Notion nests zips for big exports). Returns the drafts and the files skipped, with reasons."""
     drafts: list[PlanDraft] = []
     skipped: list[str] = []
     budget = [MAX_ARCHIVE_TEXT_BYTES]
 
-    def walk(data: bytes, name: str, depth: int) -> None:
-        try:
-            archive = zipfile.ZipFile(io.BytesIO(data))
-        except zipfile.BadZipFile as exc:
-            raise PlanParseError(f"{name} is not a valid zip file") from exc
-        for info in sorted(archive.infolist(), key=lambda i: i.filename):
-            entry = PurePosixPath(info.filename)
-            suffix = entry.suffix.lower()
-            if info.is_dir() or entry.name.startswith((".", "__MACOSX")) or "__MACOSX" in entry.parts:
-                continue
-            if suffix == ".zip" and depth < 2:
-                walk(archive.read(info), entry.name, depth + 1)
-                continue
-            if suffix not in SUPPORTED_EXTENSIONS:
-                continue
-            if info.file_size > MAX_UPLOAD_BYTES or info.file_size > budget[0]:
-                skipped.append(f"{entry.name} (too large)")
-                continue
-            budget[0] -= info.file_size
+    def take(name: str, data: bytes, depth: int) -> None:
+        entry = PurePosixPath(name)
+        if entry.name.startswith(".") or "__MACOSX" in entry.parts:
+            return
+        suffix = entry.suffix.lower()
+        if suffix == ".zip":
+            if depth >= 3:
+                return
             try:
-                drafts.append(parse_upload(entry.name, archive.read(info), today))
-            except PlanParseError as exc:
-                skipped.append(f"{entry.name} ({exc})")
+                archive = zipfile.ZipFile(io.BytesIO(data))
+            except zipfile.BadZipFile as exc:
+                raise PlanParseError(f"{entry.name} is not a valid zip file") from exc
+            for info in sorted(archive.infolist(), key=lambda i: i.filename):
+                inner = PurePosixPath(info.filename)
+                wanted = inner.suffix.lower() in (*SUPPORTED_EXTENSIONS, ".zip")
+                if info.is_dir() or not wanted:
+                    continue
+                if inner.suffix.lower() != ".zip" and (info.file_size > MAX_UPLOAD_BYTES or info.file_size > budget[0]):
+                    skipped.append(f"{inner.name} (too large)")
+                    continue
+                take(info.filename, archive.read(info), depth + 1)
+            return
+        if suffix not in SUPPORTED_EXTENSIONS:
+            return
+        if len(data) > MAX_UPLOAD_BYTES or len(data) > budget[0]:
+            skipped.append(f"{entry.name} (too large)")
+            return
+        budget[0] -= len(data)
+        try:
+            drafts.append(parse_upload(entry.name, data, today))
+        except PlanParseError as exc:
+            skipped.append(f"{entry.name} ({exc})")
 
-    walk(content, filename, 0)
+    for name, data in sorted(files, key=lambda f: f[0]):
+        take(name, data, 0)
     if not drafts:
-        raise PlanParseError(f"No pages with tasks found in {filename}", skipped[:10])
+        raise PlanParseError(f"No pages with tasks found in {label}", skipped[:10])
     return drafts, skipped
+
+
+def parse_archive(filename: str, content: bytes, today: date | None = None) -> tuple[list[PlanDraft], list[str]]:
+    """Every plan file in one .zip (e.g. a Notion export with subpages)."""
+    if len(content) > MAX_ARCHIVE_BYTES:
+        raise PlanParseError(f"{filename} is larger than {MAX_ARCHIVE_BYTES // 2**20} MB")
+    return parse_many([(filename, content)], today, label=filename)
 
 
 __all__ = [
     "ImportResult", "PlanDraft", "PlanParseError", "dump_plan", "fetch_notion_database",
-    "parse_archive", "parse_upload", "persist_draft", "persist_drafts",
+    "parse_archive", "parse_many", "parse_upload", "persist_draft", "persist_drafts",
 ]

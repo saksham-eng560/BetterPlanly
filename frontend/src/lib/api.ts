@@ -112,9 +112,10 @@ export const api = {
     request<TaskChange>(`/checklist/${itemId}`, { method: "PATCH", body: JSON.stringify({ done }) }),
   history: (limit = 30) => request<ChangeSet[]>(`/history?limit=${limit}`),
   undo: (changeSetId: number) => post<ChangeSet>(`/history/${changeSetId}/undo`),
-  importFile: (file: File) => {
+  /** One file, a .zip, or a whole folder's files: imported together as one change set. */
+  importFiles: (files: { file: File; path: string }[]) => {
     const form = new FormData();
-    form.append("file", file);
+    for (const { file, path } of files) form.append("files", file, path);
     return request<ImportResult>("/imports/file", { method: "POST", body: form });
   },
   importNotion: (databaseId: string) => post<ImportResult>("/imports/notion", { database_id: databaseId }),

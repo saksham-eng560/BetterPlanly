@@ -44,3 +44,4 @@
   color: var(--red); font-size: var(--text-footnote); line-height: 1.5;
 }
 .import-skipped { color: var(--label-secondary); }
+.drop-actions { display: flex; gap: var(--s2); flex-wrap: wrap; justify-content: center; }

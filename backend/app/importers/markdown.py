@@ -11,6 +11,7 @@ _HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 _MARKUP = re.compile(r"\*\*|__|</?b>|</?strong>")
 _LEADING_SYMBOLS = re.compile(r"^[^\w(\[]+")
 _SEPARATORS = re.compile(r"^[\s·:,—-]+|[\s·:,—-]+$")
+_SUBPAGE_LINK = re.compile(r"\]\((?!https?:)[^)]+\.md\)")  # a Notion export linking to its subpages
 _BOLD_LINE = re.compile(r"^\s*\*\*(.+?)\*\*\s*$")
 _CHECKBOX = re.compile(r"^(\s*)[-*+]\s+\[([ xX])\]\s+(.+)$")
 _BULLET = re.compile(r"^(\s+)[-*+]\s+(.+)$")
@@ -157,5 +158,10 @@ def parse_markdown(filename: str, text: str, today: date | None = None) -> PlanD
     finish()
 
     if not tasks:
+        if _SUBPAGE_LINK.search(text):
+            raise PlanParseError(
+                f"{filename} is the top page of a Notion export. Its weeks are separate files: "
+                "drop the whole exported folder (or the .zip) instead."
+            )
         raise PlanParseError(f"{filename} has no tasks — expected '- [ ] …' lines (see docs/PLAN_FORMAT.md)")
     return PlanDraft(source="markdown", source_ref=filename, title=title, tasks=tasks)

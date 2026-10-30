@@ -218,3 +218,26 @@ async def test_upload_zip_without_plans(api):
     assert response.status_code == 422 and "No pages with tasks" in response.json()["detail"]
     bad = await api.post("/api/imports/file", files={"file": ("broken.zip", b"not a zip")})
     assert bad.status_code == 422
+
+
+async def test_upload_an_unzipped_notion_export_folder(api):
+    """Safari unzips Notion's export into a folder; dropping that folder sends every file at once."""
+    fixtures = REPO_ROOT / "backend" / "tests" / "fixtures"
+    week = (fixtures / "notion-week.md").read_bytes()
+    folder = [
+        ("files", ("AIML DEV & LC CF 40290067e9e1803e.md", (fixtures / "notion-top-page.md").read_bytes())),
+        ("files", ("AIML DEV & LC CF/Week 2 HTTP 40290067e9e181f6.md", week)),
+        ("files", ("AIML DEV & LC CF/Week 3 FastAPI 40290067e9e181b5.md", week.replace(b"Week 2", b"Week 3"))),
+    ]
+    body = (await api.post("/api/imports/file", files=folder)).json()
+    assert len(body["plans"]) == 2 and body["created"] == 66
+    assert len(body["skipped"]) == 1 and "top page of a Notion export" in body["skipped"][0]
+    await api.post(f"/api/history/{body['change_set']['id']}/undo")
+    assert (await api.get("/api/state", params={"today": "2026-10-30"})).json()["tasks"] == 0
+
+
+async def test_top_page_alone_explains_what_to_drop(api):
+    top = (REPO_ROOT / "backend" / "tests" / "fixtures" / "notion-top-page.md").read_bytes()
+    response = await api.post("/api/imports/file", files={"file": ("AIML DEV & LC CF 4029.md", top)})
+    assert response.status_code == 422
+    assert "drop the whole exported folder (or the .zip) instead" in response.json()["detail"]
