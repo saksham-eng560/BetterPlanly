@@ -68,6 +68,13 @@ def _minutes_between(a: datetime, b: datetime) -> int:
     return round((b - a).total_seconds() / 60)
 
 
+def _span(minutes: int) -> str:
+    hours, rest = divmod(minutes, 60)
+    if not hours:
+        return f"{rest} min"
+    return f"{hours}h {rest}m" if rest else f"{hours}h"
+
+
 async def task_event_message(svc: TaskService, change_set_ids: list[int], now: datetime) -> str:
     """Describe what the user just did, including whether a task finished early or late."""
     lines = []
@@ -88,7 +95,7 @@ async def task_event_message(svc: TaskService, change_set_ids: list[int], now: d
                 done_at = done_at.astimezone(now.tzinfo)
             done_at = done_at.replace(tzinfo=None)
             delta = _minutes_between(done_at, planned_end)
-            timing = f"{delta} min early" if delta > 5 else f"{-delta} min late" if delta < -5 else "on time"
+            timing = f"{_span(delta)} early" if delta > 5 else f"{_span(-delta)} late" if delta < -5 else "on time"
             line += (
                 f" at {done_at.strftime('%H:%M')} — planned {planned_start.strftime('%H:%M')}"
                 f"–{planned_end.strftime('%H:%M')}, finished {timing}"

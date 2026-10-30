@@ -1,0 +1,132 @@
+/* Design tokens: Apple system colours, Dynamic Type scale, 8pt spacing, motion.
+   Components use only these variables (docs/UI_SPEC.md). */
+
+:root {
+  color-scheme: light dark;
+
+  /* tints */
+  --blue: #007aff; --green: #34c759; --indigo: #5856d6; --orange: #ff9500;
+  --pink: #ff2d55; --purple: #af52de; --red: #ff3b30; --teal: #30b0c7;
+  --yellow: #ffcc00; --mint: #00c7be; --cyan: #32ade6; --brown: #a2845e; --gray: #8e8e93;
+  --accent: var(--blue);
+  --on-accent: #ffffff;
+
+  /* labels */
+  --label: #000000;
+  --label-secondary: rgba(60, 60, 67, 0.6);
+  --label-tertiary: rgba(60, 60, 67, 0.3);
+  --label-quaternary: rgba(60, 60, 67, 0.18);
+
+  /* backgrounds */
+  --bg: #ffffff;
+  --bg-secondary: #f2f2f7;
+  --bg-tertiary: #ffffff;
+  --bg-grouped: #f2f2f7;
+  --bg-grouped-secondary: #ffffff;
+  --bg-grouped-tertiary: #f2f2f7;
+  --bg-elevated: #ffffff;
+
+  /* fills */
+  --fill: rgba(120, 120, 128, 0.2);
+  --fill-secondary: rgba(120, 120, 128, 0.16);
+  --fill-tertiary: rgba(118, 118, 128, 0.12);
+  --fill-quaternary: rgba(116, 116, 128, 0.08);
+
+  /* separators */
+  --separator: rgba(60, 60, 67, 0.29);
+  --separator-opaque: #c6c6c8;
+
+  /* task types (blue is reserved for the accent) */
+  --type-study: var(--indigo);
+  --type-work: var(--cyan);
+  --type-reading: var(--orange);
+  --type-fitness: var(--pink);
+  --type-meeting: var(--purple);
+  --type-habit: var(--mint);
+  --type-errand: var(--brown);
+  --type-personal: var(--yellow);
+  --type-other: var(--gray);
+
+  --shadow-float: 0 0 0 0.5px var(--separator), 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --backdrop: rgba(0, 0, 0, 0.2);
+
+  /* type */
+  --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+  --font-rounded: ui-rounded, "SF Pro Rounded", var(--font-text);
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  --text-large-title: 2.125rem;  /* 34/41 */
+  --text-title1: 1.75rem;        /* 28/34 */
+  --text-title2: 1.375rem;       /* 22/28 */
+  --text-title3: 1.25rem;        /* 20/25 */
+  --text-headline: 1.0625rem;    /* 17/22 */
+  --text-body: 1.0625rem;        /* 17/22 */
+  --text-callout: 1rem;          /* 16/21 */
+  --text-subhead: 0.9375rem;     /* 15/20 */
+  --text-footnote: 0.8125rem;    /* 13/18 */
+  --text-caption1: 0.75rem;      /* 12/16 */
+  --text-caption2: 0.6875rem;    /* 11/13 */
+
+  /* space (8pt grid) */
+  --s1: 0.25rem; --s2: 0.5rem; --s3: 0.75rem; --s4: 1rem; --s5: 1.25rem;
+  --s6: 1.5rem; --s8: 2rem; --s10: 2.5rem; --s12: 3rem; --s16: 4rem;
+
+  /* radius */
+  --r-xs: 6px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px; --r-full: 999px;
+
+  /* layout */
+  --toolbar-h: 3.25rem;
+  --inspector-w: 23.5rem;
+  --content-max: 46rem;
+  --hit: 44px;
+
+  /* motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-press: 160ms;
+  --dur-fast: 180ms;
+  --dur-base: 240ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --blue: #0a84ff; --green: #30d158; --indigo: #5e5ce6; --orange: #ff9f0a;
+    --pink: #ff375f; --purple: #bf5af2; --red: #ff453a; --teal: #40c8e0;
+    --yellow: #ffd60a; --mint: #63e6e2; --cyan: #64d2ff; --brown: #ac8e68; --gray: #8e8e93;
+
+    --label: #ffffff;
+    --label-secondary: rgba(235, 235, 245, 0.6);
+    --label-tertiary: rgba(235, 235, 245, 0.3);
+    --label-quaternary: rgba(235, 235, 245, 0.16);
+
+    --bg: #000000;
+    --bg-secondary: #1c1c1e;
+    --bg-tertiary: #2c2c2e;
+    --bg-grouped: #000000;
+    --bg-grouped-secondary: #1c1c1e;
+    --bg-grouped-tertiary: #2c2c2e;
+    --bg-elevated: #2c2c2e;
+
+    --fill: rgba(120, 120, 128, 0.36);
+    --fill-secondary: rgba(120, 120, 128, 0.32);
+    --fill-tertiary: rgba(118, 118, 128, 0.24);
+    --fill-quaternary: rgba(118, 118, 128, 0.18);
+
+    --separator: rgba(84, 84, 88, 0.6);
+    --separator-opaque: #38383a;
+
+    --shadow-float: 0 0 0 0.5px var(--separator), 0 4px 12px rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.45);
+    --shadow-card: none;
+    --backdrop: rgba(0, 0, 0, 0.4);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --separator: var(--label-tertiary);
+    --label-secondary: color-mix(in srgb, var(--label) 78%, transparent);
+  }
+}
