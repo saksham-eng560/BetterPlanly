@@ -49,6 +49,7 @@ The schema is [`schemas/planly-plan.v1.schema.json`](../schemas/planly-plan.v1.s
 | `tasks[].priority` | enum | `medium` | `high medium low` |
 | `tasks[].status` | enum | `todo` | `todo done skipped` |
 | `tasks[].notes` | string | | Markdown |
+| `tasks[].section` | string | | Group shown as its own widget box, e.g. "LeetCode list" |
 | `tasks[].tags` | string[] | | |
 | `tasks[].checklist` | (string \| {title, done})[] | | Sub-steps |
 | `tasks[].resources` | {title, url?, kind?, note?}[] | | `kind`: `link video article book doc note` |
@@ -71,6 +72,16 @@ Export (`GET /api/export`) writes this same format, so an export always imports 
 - [x] 07:00 Morning run (fitness, 40m)   ← [x] = done
 - [ ] Groceries (errand, low)    ← no time = Anytime
 ```
+
+**Notion week pages.** Notion's own page export works too, including plans that write dates without a year:
+
+- **Dates in tasks.** A date inside a task line, such as `**Day 8 · Fri 30 Oct: HTTP and REST**`, becomes the task's date and is removed from the title. A missing year is inferred from the weekday, otherwise the year nearest today.
+- **Dates in headings.** A heading with a date, such as `#### LC day 1 · Fri 30 Oct`, dates the tasks under it.
+- **Sections.** Any other heading names the section for the tasks under it, so `## 🧠 AIML / Dev` becomes "AIML / Dev". A Notion callout (`<aside>`) whose first line is bold, such as `**Free days (no LC)**`, starts its own section.
+- **Types.** Sections mentioning LeetCode or problems give `study` tasks tagged `dsa`; AIML, dev, study or learning sections give `study`.
+- **Ignored.** Plain bullets and links outside a task, such as video lists or a weekly-review form, are left out.
+
+To import a week, open the page in Notion and choose **⋯ → Export → Markdown & CSV**, unzip it, and drop the `.md` file on Import. Exporting the same page again later updates it in place.
 
 Metadata in the trailing `( … )` is comma-separated and order-free:
 

@@ -35,6 +35,7 @@ class TaskDraft:
     priority: str = "medium"
     status: str = "todo"
     notes: str = ""
+    section: str | None = None
     tags: list[str] = field(default_factory=list)
     checklist: list[ChecklistDraft] = field(default_factory=list)
     resources: list[ResourceDraft] = field(default_factory=list)

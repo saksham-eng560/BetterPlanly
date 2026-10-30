@@ -161,5 +161,11 @@ async def test_agent_task_event_and_validation(api):
 
 async def test_health(api, engine):
     assert (await api.get("/api/health")).json() == {"ok": True}
-    async with engine.connect() as conn:  # migrations ran: alembic_version is present
-        assert (await conn.execute(text("select version_num from alembic_version"))).scalar() == "0001"
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
+    from tests.conftest import BACKEND_DIR
+
+    head = ScriptDirectory.from_config(Config(str(BACKEND_DIR / "alembic.ini"))).get_current_head()
+    async with engine.connect() as conn:  # the test database is migrated to the latest revision
+        assert (await conn.execute(text("select version_num from alembic_version"))).scalar() == head

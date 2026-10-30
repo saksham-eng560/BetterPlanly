@@ -72,6 +72,7 @@ class Task(Base):
     status: Mapped[str] = mapped_column(String(10), default="todo")
     completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     notes: Mapped[str] = mapped_column(Text, default="")
+    section: Mapped[str | None] = mapped_column(String(100))
     tags: Mapped[list[str]] = mapped_column(JsonType, default=list)
     position: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

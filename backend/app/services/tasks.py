@@ -39,7 +39,7 @@ ENTITY_MODELS: dict[str, type[Base]] = {
 ENTITY_NAMES = {model: name for name, model in ENTITY_MODELS.items()}
 
 EDITABLE_TASK_FIELDS = {
-    "title", "type", "date", "start_time", "duration_min", "priority", "status", "notes", "tags",
+    "title", "type", "date", "start_time", "duration_min", "priority", "status", "notes", "section", "tags",
 }
 
 

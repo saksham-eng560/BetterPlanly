@@ -11,8 +11,8 @@ import { ImportSheet } from "../features/import/ImportSheet";
 import { DayTimeline } from "../features/timeline/DayTimeline";
 import { WeekStrip } from "../features/timeline/WeekStrip";
 import type { Task } from "../lib/api";
-import { dayMonth, relativeDay, today as todayIso, weekStart, weekdayLong } from "../lib/dates";
-import { useAppState, useMissed, useUnscheduled, useWeekTasks } from "./queries";
+import { dayMonth, today as todayIso, weekStart, weekdayLong } from "../lib/dates";
+import { useAppState, useMissed, useTaskRange, useUnscheduled, useWeekTasks } from "./queries";
 
 import "./app.css";
 
@@ -42,6 +42,7 @@ export function App() {
 
   const week = weekStart(selected);
   const weekTasks = useWeekTasks(week);
+  const boxTasks = useTaskRange(week, 14);
   const missed = useMissed(today);
   const unscheduled = useUnscheduled();
   const state = useAppState(today);
@@ -100,10 +101,10 @@ export function App() {
           )}
 
           <Checklist
-            dayLabel={relativeDay(selected, today)}
-            dayTasks={dayTasks}
-            missed={isToday ? missed.data ?? [] : []}
+            tasks={boxTasks.data ?? []}
+            missed={missed.data ?? []}
             unscheduled={unscheduled.data ?? []}
+            today={today}
             onOpen={open}
           />
         </main>

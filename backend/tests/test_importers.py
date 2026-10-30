@@ -1,5 +1,5 @@
 import json
-from datetime import date, time
+from datetime import date, time, timedelta
 
 import httpx
 import pytest
@@ -172,3 +172,45 @@ async def test_duplicate_ids_in_one_file_are_disambiguated(session):
     draft = parse_upload("dup.md", b"## 2026-10-30\n- [ ] Stretch\n- [ ] Stretch\n")
     result = await persist_draft(TaskService(session, actor="import"), draft)
     assert result.created == 2
+
+
+def test_notion_week_page_export():
+    """A Notion study-plan page: dates like 'Fri 30 Oct' in task text and headings, sections, callouts."""
+    draft = parse_upload("Week 2 · HTTP 40290067.md", (FIXTURES / "notion-week.md").read_bytes(), today=date(2026, 10, 30))
+    assert draft.title == "Week 2 · HTTP, async, Pydantic, Git, Docker, SQL"
+    by_section: dict[str, list] = {}
+    for task in draft.tasks:
+        by_section.setdefault(task.section, []).append(task)
+    assert list(by_section) == [
+        "Goals for this week", "AIML / Dev", "LeetCode list", "Free days (no LC)", "Explore (side quests)",
+    ]
+
+    days = by_section["AIML / Dev"]
+    assert [t.date for t in days] == [date(2026, 10, 30) + timedelta(days=i) for i in range(7)]
+    assert days[0].title == "Day 8 · HTTP and REST" and days[0].type == "study"
+    assert days[0].notes.startswith("📺 Learn: YT: Hussein Nasser")
+    assert "🛠️ Do: Call a public API" in days[0].notes
+
+    problems = by_section["LeetCode list"]
+    assert len(problems) == 15
+    assert sorted({t.date for t in problems}) == [date(2026, 10, 30) + timedelta(days=i) for i in range(5)]
+    assert sum(t.status == "done" for t in problems) == 3
+    assert problems[1].title == "4 Median of Two Sorted Arrays — Hard · 🆕 New · C++"
+    assert all(t.type == "study" and "dsa" in t.tags for t in problems)
+
+    free = by_section["Free days (no LC)"]
+    assert [t.date for t in free] == [date(2026, 11, 4), date(2026, 11, 5), None]
+    assert free[0].title.startswith("AI/dev deep day")
+    assert all(t.date is None for t in by_section["Goals for this week"] + by_section["Explore (side quests)"])
+    assert by_section["Explore (side quests)"][0].title == "New tech: Install Ollama and run a small local model"
+
+
+async def test_notion_week_reimport_and_export_keep_sections(session):
+    content = (FIXTURES / "notion-week.md").read_bytes()
+    svc = TaskService(session, actor="import")
+    first = await persist_draft(svc, parse_upload("week2.md", content, today=date(2026, 10, 30)))
+    again = await persist_draft(svc, parse_upload("week2.md", content, today=date(2026, 10, 30)))
+    assert first.created == 33 and again.change_set is None
+    exported = dump_plan(await svc.list_tasks())
+    assert {t.get("section") for t in exported["tasks"]} >= {"AIML / Dev", "LeetCode list"}
+    assert parse_upload("export.json", json.dumps(exported).encode()).tasks[0].section is not None

@@ -6,6 +6,10 @@ import { addDays } from "../lib/dates";
 export const useWeekTasks = (start: string) =>
   useQuery({ queryKey: ["tasks", "range", start], queryFn: () => api.tasks(start, addDays(start, 6)) });
 
+/** Tasks from `start` for `days` days: the widget boxes span two weeks so a Fri–Thu plan week fits. */
+export const useTaskRange = (start: string, days: number) =>
+  useQuery({ queryKey: ["tasks", "range", start, days], queryFn: () => api.tasks(start, addDays(start, days - 1)) });
+
 export const useMissed = (today: string) =>
   useQuery({ queryKey: ["tasks", "missed", today], queryFn: () => api.missed(today) });
 

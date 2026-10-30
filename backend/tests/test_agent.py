@@ -185,3 +185,17 @@ async def test_resource_and_progress_tools(runtime_factory, session, monkeypatch
          "args": {"task_id": task.id, "state": {"run_id": "00000000-0000-0000-0000-000000000000", "now": NOW.isoformat()}}}
     )
     assert "About Learn asyncio — https://example.org" in web.content
+
+
+async def test_migrations_leave_checkpoint_tables_alone(runtime_factory):
+    """Alembic must never manage (or drop) LangGraph's checkpoint tables."""
+    from alembic import command
+    from alembic.config import Config
+
+    from tests.conftest import BACKEND_DIR, SQLALCHEMY_URL
+
+    await runtime_factory(AIMessage(content="ok"))  # creates the checkpoint tables
+    cfg = Config(str(BACKEND_DIR / "alembic.ini"))
+    cfg.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
+    cfg.attributes["sqlalchemy_url"] = SQLALCHEMY_URL
+    command.check(cfg)  # raises if autogenerate would emit any operation

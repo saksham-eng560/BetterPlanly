@@ -34,7 +34,8 @@ def format_task(task: Task) -> str:
         when += " anytime"
     if task.duration_min and not task.start_time:
         when += f" ({task.duration_min}m)"
-    return f"#{task.id} {when} [{task.type}, {task.priority}] {task.title} — {task.status}"
+    group = f" · {task.section}" if task.section else ""
+    return f"#{task.id} {when} [{task.type}, {task.priority}{group}] {task.title} — {task.status}"
 
 
 def local_now(state: dict) -> datetime:

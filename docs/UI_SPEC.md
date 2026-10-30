@@ -55,6 +55,7 @@ Colours with fixed meanings:
 | Component | Notes |
 |---|---|
 | Task card | `<button>` that opens the task sheet. Shows a glyph circle, a headline title, and a footnote meta line (time range · duration · type). Badges show high priority, checklist progress and resource count. Done cards drop to 55% opacity and show a check glyph. |
+| Widget boxes | The checklist is a grid of cards, one per Section (iOS widget style): 22 px radius, a coloured icon and title, and a large done count. Each box holds that section's tasks for the selected week and the next (so Fri–Thu plan weeks fit), plus its unscheduled ones, with open tasks first and "Show all" after 6. Missed tasks get their own red box first. Section colours come from a hash of the name and skip yellow, which is too low-contrast for titles. |
 | Checklist row | 56 px min-height. A 22 px Reminders-style circular checkbox in the type colour, with the checkmark drawn by `stroke-dashoffset`. Title and meta in the middle. Move and details actions sit at the end in tertiary grey, turning accent on hover. Separators are inset to the text start. |
 | Move menu | Popover on material, opening from its trigger corner. Offers Today, Tomorrow, Next week, Pick a date… (native date input) and Remove date. |
 | Task sheet | Native `<dialog>`, which gives focus trapping, Esc and an inert background. Holds a facts table, notes, steps, resources, "Ask the agent for resources", Move, and Mark as done. |

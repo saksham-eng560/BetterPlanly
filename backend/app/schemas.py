@@ -41,6 +41,8 @@ class TaskOut(BaseModel):
     status: str
     completed_at: dt.datetime | None
     notes: str
+    section: str | None
+    position: int
     tags: list[str]
     checklist: list[ChecklistOut]
     resources: list[ResourceOut]
@@ -51,7 +53,7 @@ class TaskOut(BaseModel):
             id=task.id, plan_id=task.plan_id, title=task.title, type=task.type, date=task.date,
             start=task.start_time.strftime("%H:%M") if task.start_time else None,
             duration_min=task.duration_min, priority=task.priority, status=task.status,
-            completed_at=task.completed_at, notes=task.notes, tags=task.tags or [],
+            completed_at=task.completed_at, notes=task.notes, section=task.section, position=task.position, tags=task.tags or [],
             checklist=[ChecklistOut.model_validate(c, from_attributes=True) for c in task.checklist],
             resources=[ResourceOut.model_validate(r, from_attributes=True) for r in task.resources],
         )
@@ -83,6 +85,7 @@ class TaskCreateIn(BaseModel):
     duration_min: int | None = Field(default=None, gt=0, le=1440)
     priority: Priority = "medium"
     notes: str = ""
+    section: str | None = Field(default=None, max_length=100)
     tags: list[str] = []
     checklist: list[str] = []
 
@@ -96,6 +99,7 @@ class TaskPatchIn(BaseModel):
     priority: Priority | None = None
     status: Status | None = None
     notes: str | None = None
+    section: str | None = Field(default=None, max_length=100)
     tags: list[str] | None = None
 
     def fields(self) -> dict:

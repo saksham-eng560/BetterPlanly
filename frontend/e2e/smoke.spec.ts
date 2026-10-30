@@ -33,6 +33,7 @@ test("import a plan, see the day, tick, move, ask the agent", async ({ page }) =
   await page.screenshot({ path: path.join(SHOTS, "today-light.png") });
 
   // tick a task in the checklist → undo toast, then the agent reacts
+  await page.getByRole("region", { name: "Tasks" }).getByRole("button", { name: /^Show all/ }).click();
   await page.getByRole("checkbox", { name: "Complete “Evening journal”" }).check({ force: true });
   await expect(page.getByRole("status").filter({ hasText: "Completed “Evening journal”" })).toBeVisible();
   await expect(page.locator(".event-chip", { hasText: "Completed" })).toBeVisible({ timeout: 15_000 });
@@ -71,4 +72,42 @@ test("dark mode and phone layout", async ({ browser }) => {
   await expect(phone.getByRole("complementary", { name: "Planly agent" })).toBeInViewport();
   await phone.waitForTimeout(400);
   await phone.screenshot({ path: path.join(SHOTS, "phone-agent.png") });
+});
+
+test("a Notion week page becomes one widget box per section", async ({ page, browser }) => {
+  await open(page);
+  await page.getByRole("button", { name: "Import" }).click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose File…" }).click();
+  await (await chooser).setFiles(path.join(ROOT, "backend", "tests", "fixtures", "notion-week.md"));
+  await expect(page.locator(".import-result")).toContainText("33 new");
+  await page.getByRole("button", { name: "Close" }).click();
+
+  const sections = ["Goals for this week", "AIML / Dev", "LeetCode list", "Free days (no LC)", "Explore (side quests)"];
+  for (const name of sections) await expect(page.locator(".widget", { hasText: name }).first()).toBeVisible();
+
+  const leetcode = page.getByRole("region", { name: "LeetCode list" });
+  await expect(leetcode.locator(".widget-count")).toHaveText("3/15");
+  await leetcode.getByRole("checkbox", { name: /Complete “454 4Sum II/ }).check({ force: true });
+  await expect(leetcode.locator(".widget-count")).toHaveText("4/15");
+  const showChecklist = async (p: typeof page) => {
+    await p.locator("#checklist-title").evaluate((el) => el.scrollIntoView({ block: "start" }));
+    await p.waitForTimeout(600);
+  };
+  await page.waitForTimeout(5500); // let the toasts clear
+  await showChecklist(page);
+  await page.screenshot({ path: path.join(SHOTS, "widgets-light.png") });
+  await leetcode.getByRole("button", { name: "Show all 15" }).click();
+  await expect(leetcode.locator(".check-row")).toHaveCount(15);
+
+  for (const [name, options] of [
+    ["widgets-dark.png", { colorScheme: "dark" as const, viewport: { width: 1440, height: 960 } }],
+    ["widgets-phone.png", { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 }],
+  ] as const) {
+    const other = await browser.newPage(options);
+    await open(other);
+    await expect(other.locator(".widget").first()).toBeVisible();
+    await showChecklist(other);
+    await other.screenshot({ path: path.join(SHOTS, name) });
+  }
 });

@@ -105,6 +105,46 @@ def parse_iso_when(value: str | None) -> tuple[date | None, time | None]:
     return moment.date(), moment.time().replace(second=0, microsecond=0, tzinfo=None)
 
 
+_MONTHS = ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
+_WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+_MONTH = r"(?P<month>jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?"
+_WEEKDAY = r"(?:(?P<weekday>mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s+)?"
+_LOOSE_DATE = re.compile(
+    rf"\b(?:{_WEEKDAY}(?P<day>\d{{1,2}})(?:st|nd|rd|th)?\s+{_MONTH}"
+    rf"|{_WEEKDAY.replace('weekday', 'weekday2')}{_MONTH.replace('month', 'month2')}\s+(?P<day2>\d{{1,2}})(?:st|nd|rd|th)?)\b",
+    re.I,
+)
+_ISO_DATE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
+
+
+def find_date(text: str, today: date) -> tuple[date, int, int] | None:
+    """First date in free text: ISO ('2026-10-30') or without a year ('Fri 30 Oct', 'Oct 30').
+    A missing year is inferred from the weekday when there is one, else the year nearest today.
+    Returns (date, match start, match end)."""
+    if iso := _ISO_DATE.search(text):
+        try:
+            return date.fromisoformat(iso.group(1)), iso.start(), iso.end()
+        except ValueError:
+            pass
+    for match in _LOOSE_DATE.finditer(text):
+        groups = match.groupdict()
+        month = _MONTHS.index((groups["month"] or groups["month2"])[:3].lower()) + 1
+        day = int(groups["day"] or groups["day2"])
+        weekday = groups["weekday"] or groups["weekday2"]
+        candidates = []
+        for year in (today.year - 1, today.year, today.year + 1):
+            try:
+                candidates.append(date(year, month, day))
+            except ValueError:
+                continue
+        if weekday:
+            matching = [d for d in candidates if d.weekday() == _WEEKDAYS.index(weekday[:3].lower())]
+            candidates = matching or candidates
+        if candidates:
+            return min(candidates, key=lambda d: abs((d - today).days)), match.start(), match.end()
+    return None
+
+
 def slug(text: str) -> str:
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:80] or "task"

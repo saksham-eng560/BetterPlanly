@@ -20,6 +20,8 @@ export interface Task {
   status: Status;
   completed_at: string | null;
   notes: string;
+  section: string | null;
+  position: number;
   tags: string[];
   checklist: ChecklistItem[];
   resources: Resource[];

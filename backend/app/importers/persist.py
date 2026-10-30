@@ -8,7 +8,7 @@ from app.importers.draft import PlanDraft, TaskDraft
 from app.models import ChangeSet, ChecklistItem, Plan, Resource, Task, utcnow
 from app.services.tasks import TaskService, normalize_task_fields
 
-SOURCE_FIELDS = ("title", "type", "date", "start_time", "duration_min", "priority", "notes", "tags")
+SOURCE_FIELDS = ("title", "type", "date", "start_time", "duration_min", "priority", "notes", "section", "tags")
 
 
 @dataclass

@@ -4,6 +4,7 @@
     result = await persist_draft(TaskService(session, actor="import"), draft)
 """
 
+from datetime import date
 from pathlib import Path
 
 from app.importers.draft import PlanDraft, PlanParseError
@@ -16,7 +17,7 @@ MAX_UPLOAD_BYTES = 2 * 1024 * 1024
 SUPPORTED_EXTENSIONS = (".json", ".yaml", ".yml", ".md", ".markdown", ".csv")
 
 
-def parse_upload(filename: str, content: bytes) -> PlanDraft:
+def parse_upload(filename: str, content: bytes, today: date | None = None) -> PlanDraft:
     if len(content) > MAX_UPLOAD_BYTES:
         raise PlanParseError(f"{filename} is larger than 2 MB")
     extension = Path(filename).suffix.lower()
@@ -29,7 +30,7 @@ def parse_upload(filename: str, content: bytes) -> PlanDraft:
     if extension in (".yaml", ".yml"):
         return parse_plan_file(filename, text, is_yaml=True)
     if extension in (".md", ".markdown"):
-        return parse_markdown(filename, text)
+        return parse_markdown(filename, text, today)
     if extension == ".csv":
         return parse_notion_csv(filename, text)
     raise PlanParseError(f"Unsupported file type {extension or '(none)'}; use {', '.join(SUPPORTED_EXTENSIONS)}")

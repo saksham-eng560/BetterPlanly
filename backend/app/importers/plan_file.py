@@ -64,6 +64,7 @@ def parse_plan_file(filename: str, text: str, *, is_yaml: bool) -> PlanDraft:
                 priority=raw.get("priority", "medium"),
                 status=raw.get("status", "todo"),
                 notes=raw.get("notes", ""),
+                section=raw.get("section"),
                 tags=raw.get("tags", []),
                 checklist=[
                     ChecklistDraft(item) if isinstance(item, str) else ChecklistDraft(item["title"], item.get("done", False))
@@ -96,6 +97,8 @@ def dump_plan(tasks: list[Task], title: str = "Planly export") -> dict[str, Any]
         item["status"] = task.status
         if task.notes:
             item["notes"] = task.notes
+        if task.section:
+            item["section"] = task.section
         if task.tags:
             item["tags"] = task.tags
         if task.checklist:

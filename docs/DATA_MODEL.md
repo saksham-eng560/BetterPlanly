@@ -30,6 +30,7 @@ erDiagram
     text status "todo|done|skipped"
     timestamptz completed_at
     text notes
+    text section "nullable; heading it came from, shown as a widget box"
     jsonb tags
     int position
     timestamptz created_at

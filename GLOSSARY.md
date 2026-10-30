@@ -20,6 +20,10 @@ _Avoid_: Pinned, locked
 A sub-step inside a Task, ticked independently.
 _Avoid_: Subtask
 
+**Section**:
+The group a Task belongs to inside its source, such as a heading on a Notion page ("AIML / Dev", "LeetCode list"). Each Section is shown as its own widget box.
+_Avoid_: Group, category, list
+
 **Resource**:
 A link, video, book or note attached to a Task to help complete it.
 _Avoid_: Reference, attachment
