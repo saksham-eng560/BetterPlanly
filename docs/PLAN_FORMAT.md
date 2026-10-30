@@ -81,7 +81,15 @@ Export (`GET /api/export`) writes this same format, so an export always imports 
 - **Types.** Sections mentioning LeetCode or problems give `study` tasks tagged `dsa`; AIML, dev, study or learning sections give `study`.
 - **Ignored.** Plain bullets and links outside a task, such as video lists or a weekly-review form, are left out.
 
-To import a week, open the page in Notion and choose **⋯ → Export → Markdown & CSV**, unzip it, and drop the `.md` file on Import. Exporting the same page again later updates it in place.
+**Importing everything at once.** Open the parent page (for example the roadmap page that lists every week), choose **⋯ → Export**, pick **Markdown & CSV**, turn on **Include subpages**, and export. Drop the downloaded `.zip` on Import as it is, without unzipping it:
+
+- Every page with checkboxes becomes its own Plan, all in one Change set, so one Undo reverts the whole import.
+- Pages without tasks, images and other files are skipped. The result says how many.
+- Nested zips, which Notion uses for large exports, are read too.
+- Exporting again later and dropping the new zip updates every page in place.
+- Limits: 100 MB per zip, 2 MB per page and 30 MB of pages in total.
+
+To import a single week instead, export just that page and drop its `.md` file.
 
 Metadata in the trailing `( … )` is comma-separated and order-free:
 

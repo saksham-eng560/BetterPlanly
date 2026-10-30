@@ -40,6 +40,8 @@ export interface TaskChange { task: Task | null; change_set: ChangeSet | null }
 
 export interface ImportResult {
   plan: { id: number; title: string; source: string; source_ref: string };
+  plans: { id: number; title: string; source: string; source_ref: string }[];
+  skipped: string[];
   created: number;
   updated: number;
   unchanged: number;

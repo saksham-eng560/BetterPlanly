@@ -55,7 +55,7 @@ Every mutation responds with `{"task": {...}, "change_set": {"id": 41, "summary"
 
 | Method & path | Body | Response |
 |---|---|---|
-| `POST /imports/file` | multipart `file` (`.json .yaml .yml .md .csv`, ≤ 2 MB) | `{"plan": {...}, "created": 9, "updated": 0, "unchanged": 0, "change_set": {...}}` |
+| `POST /imports/file` | multipart `file` (`.json .yaml .yml .md .csv`, ≤ 2 MB; or a `.zip` export, ≤ 100 MB, importing every page inside as one Change set) | `{"plan": {...}, "created": 9, "updated": 0, "unchanged": 0, "change_set": {...}}` |
 | `POST /imports/notion` | `{"database_id": "…"}` | Same shape. 400 if `NOTION_TOKEN` is not set |
 | `GET /export` | | Planly v1 JSON Plan file containing all Tasks (`Content-Disposition: attachment`) |
 

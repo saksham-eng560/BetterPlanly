@@ -136,6 +136,8 @@ class PlanOut(BaseModel):
 
 class ImportOut(BaseModel):
     plan: PlanOut
+    plans: list[PlanOut]
+    skipped: list[str] = []
     created: int
     updated: int
     unchanged: int

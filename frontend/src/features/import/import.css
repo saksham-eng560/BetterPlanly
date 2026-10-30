@@ -43,3 +43,4 @@
   border-radius: var(--r-md); background: color-mix(in srgb, var(--red) 10%, transparent);
   color: var(--red); font-size: var(--text-footnote); line-height: 1.5;
 }
+.import-skipped { color: var(--label-secondary); }

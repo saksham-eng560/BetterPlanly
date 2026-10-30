@@ -13,11 +13,15 @@ SOURCE_FIELDS = ("title", "type", "date", "start_time", "duration_min", "priorit
 
 @dataclass
 class ImportResult:
-    plan: Plan
+    plans: list[Plan]
     created: int
     updated: int
     unchanged: int
     change_set: ChangeSet | None
+
+    @property
+    def plan(self) -> Plan:
+        return self.plans[0]
 
 
 def _dedupe_ids(tasks: list[TaskDraft]) -> None:
@@ -30,7 +34,27 @@ def _dedupe_ids(tasks: list[TaskDraft]) -> None:
 
 
 async def persist_draft(svc: TaskService, draft: PlanDraft) -> ImportResult:
-    session = svc.session
+    return await persist_drafts(svc, [draft])
+
+
+async def persist_drafts(svc: TaskService, drafts: list[PlanDraft]) -> ImportResult:
+    """Upsert one or more plans (e.g. every page of a Notion export) as a single Change set."""
+    if not drafts:
+        raise ValueError("nothing to import")
+    plans: list[Plan] = []
+    totals = [0, 0, 0]
+    async with svc.change_set() as rec:
+        for draft in drafts:
+            plan, counts = await _upsert_plan(rec, svc.session, draft)
+            plans.append(plan)
+            totals = [a + b for a, b in zip(totals, counts)]
+        created, updated, _ = totals
+        name = f'"{plans[0].title}"' if len(plans) == 1 else f"{len(plans)} pages"
+        rec.change_set.summary = f"Imported {name}: {created} new, {updated} updated"
+    return ImportResult(plans, *totals, rec.change_set)
+
+
+async def _upsert_plan(rec, session, draft: PlanDraft) -> tuple[Plan, tuple[int, int, int]]:
     _dedupe_ids(draft.tasks)
     plan = (
         await session.execute(select(Plan).where(Plan.source == draft.source, Plan.source_ref == draft.source_ref))
@@ -48,50 +72,48 @@ async def persist_draft(svc: TaskService, draft: PlanDraft) -> ImportResult:
     }
     created = updated = unchanged = 0
 
-    async with svc.change_set() as rec:
-        for position, item in enumerate(draft.tasks):
-            values = normalize_task_fields({f: getattr(item, f) for f in SOURCE_FIELDS})
-            task = existing.get(item.external_id)
-            if task is None:
-                task = await rec.create(
-                    Task(
-                        plan_id=plan.id, external_id=item.external_id, position=position, status=item.status,
-                        completed_at=utcnow() if item.status == "done" else None, **values,
-                    )
+    for position, item in enumerate(draft.tasks):
+        values = normalize_task_fields({f: getattr(item, f) for f in SOURCE_FIELDS})
+        task = existing.get(item.external_id)
+        if task is None:
+            task = await rec.create(
+                Task(
+                    plan_id=plan.id, external_id=item.external_id, position=position, status=item.status,
+                    completed_at=utcnow() if item.status == "done" else None, **values,
                 )
-                created += 1
-                known_checklist, known_resources = set(), set()
-            elif task.status == "done":  # never overwrite what the user finished (FR-1.6)
-                unchanged += 1
-                continue
-            else:
-                changed = await rec.update(task, position=position, **values)
-                if item.status == "done":
-                    changed |= await rec.update(task, status="done", completed_at=utcnow())
-                known_checklist = {c.title for c in task.checklist}
-                known_resources = {r.title for r in task.resources}
-                added = False
-                for c in item.checklist:
-                    added |= c.title not in known_checklist
-                for r in item.resources:
-                    added |= r.title not in known_resources
-                if changed or added:
-                    updated += 1
-                else:
-                    unchanged += 1
-
-            offset = len(known_checklist)
+            )
+            created += 1
+            known_checklist, known_resources = set(), set()
+        elif task.status == "done":  # never overwrite what the user finished (FR-1.6)
+            unchanged += 1
+            continue
+        else:
+            changed = await rec.update(task, position=position, **values)
+            if item.status == "done":
+                changed |= await rec.update(task, status="done", completed_at=utcnow())
+            known_checklist = {c.title for c in task.checklist}
+            known_resources = {r.title for r in task.resources}
+            added = False
             for c in item.checklist:
-                if c.title not in known_checklist:
-                    await rec.create(ChecklistItem(task_id=task.id, title=c.title, done=c.done, position=offset))
-                    known_checklist.add(c.title)
-                    offset += 1
+                added |= c.title not in known_checklist
             for r in item.resources:
-                if r.title not in known_resources:
-                    await rec.create(
-                        Resource(task_id=task.id, title=r.title, url=r.url, kind=r.kind, note=r.note, added_by="import")
-                    )
-                    known_resources.add(r.title)
+                added |= r.title not in known_resources
+            if changed or added:
+                updated += 1
+            else:
+                unchanged += 1
 
-        rec.change_set.summary = f'Imported "{plan.title}": {created} new, {updated} updated'
-    return ImportResult(plan, created, updated, unchanged, rec.change_set)
+        offset = len(known_checklist)
+        for c in item.checklist:
+            if c.title not in known_checklist:
+                await rec.create(ChecklistItem(task_id=task.id, title=c.title, done=c.done, position=offset))
+                known_checklist.add(c.title)
+                offset += 1
+        for r in item.resources:
+            if r.title not in known_resources:
+                await rec.create(
+                    Resource(task_id=task.id, title=r.title, url=r.url, kind=r.kind, note=r.note, added_by="import")
+                )
+                known_resources.add(r.title)
+
+    return plan, (created, updated, unchanged)

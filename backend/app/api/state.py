@@ -6,7 +6,15 @@ from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.api.deps import AppSettings, Runtime, Service, Session
-from app.importers import MAX_UPLOAD_BYTES, dump_plan, fetch_notion_database, parse_upload, persist_draft
+from app.importers import (
+    MAX_ARCHIVE_BYTES,
+    MAX_UPLOAD_BYTES,
+    dump_plan,
+    fetch_notion_database,
+    parse_archive,
+    parse_upload,
+    persist_drafts,
+)
 from app.schemas import ChangeSetOut, ImportOut, NotionImportIn, PlanOut, PreferenceOut, StateOut
 from app.services.tasks import TaskService
 
@@ -27,10 +35,12 @@ async def undo(change_set_id: int, svc: Service):
 
 # ---------- import / export ----------
 
-async def _persist(session, draft) -> ImportOut:
-    result = await persist_draft(TaskService(session, actor="import"), draft)
+async def _persist(session, drafts, skipped: list[str] | None = None) -> ImportOut:
+    result = await persist_drafts(TaskService(session, actor="import"), drafts)
     return ImportOut(
         plan=PlanOut.model_validate(result.plan, from_attributes=True),
+        plans=[PlanOut.model_validate(p, from_attributes=True) for p in result.plans],
+        skipped=skipped or [],
         created=result.created, updated=result.updated, unchanged=result.unchanged,
         change_set=ChangeSetOut.of(result.change_set),
     )
@@ -38,8 +48,11 @@ async def _persist(session, draft) -> ImportOut:
 
 @router.post("/imports/file", response_model=ImportOut, tags=["import"])
 async def import_file(file: UploadFile, session: Session):
-    content = await file.read(MAX_UPLOAD_BYTES + 1)
-    return await _persist(session, parse_upload(file.filename or "upload", content))
+    name = file.filename or "upload"
+    if name.lower().endswith(".zip"):  # a whole Notion export: every page at once
+        drafts, skipped = parse_archive(name, await file.read(MAX_ARCHIVE_BYTES + 1))
+        return await _persist(session, drafts, skipped)
+    return await _persist(session, [parse_upload(name, await file.read(MAX_UPLOAD_BYTES + 1))])
 
 
 @router.post("/imports/notion", response_model=ImportOut, tags=["import"])
@@ -47,7 +60,7 @@ async def import_notion(body: NotionImportIn, session: Session, settings: AppSet
     if not settings.notion_token:
         raise HTTPException(400, "Notion is not connected. Set NOTION_TOKEN in the backend environment.")
     draft = await fetch_notion_database(body.database_id, settings.notion_token)
-    return await _persist(session, draft)
+    return await _persist(session, [draft])
 
 
 @router.get("/export", tags=["import"])

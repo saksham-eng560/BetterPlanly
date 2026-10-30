@@ -169,3 +169,52 @@ async def test_health(api, engine):
     head = ScriptDirectory.from_config(Config(str(BACKEND_DIR / "alembic.ini"))).get_current_head()
     async with engine.connect() as conn:  # the test database is migrated to the latest revision
         assert (await conn.execute(text("select version_num from alembic_version"))).scalar() == head
+
+
+def notion_export_zip() -> bytes:
+    """Shaped like a Notion 'Markdown & CSV' export with subpages: a zip inside a zip."""
+    import io
+    import zipfile
+
+    week = (REPO_ROOT / "backend" / "tests" / "fixtures" / "notion-week.md").read_bytes()
+    inner = io.BytesIO()
+    with zipfile.ZipFile(inner, "w") as z:
+        z.writestr("AIML DEV & LC CF 4029/AIML DEV & LC CF 4029.md", b"# AIML/DEV & LC/CF\n\nAI Engineering Day-by-Day Plan\n")
+        z.writestr("AIML DEV & LC CF 4029/Week 2 HTTP 40290067e9e181f6.md", week)
+        z.writestr("AIML DEV & LC CF 4029/Week 3 FastAPI 40290067e9e181b5.md", week.replace(b"Week 2", b"Week 3"))
+        z.writestr("AIML DEV & LC CF 4029/Week 2 HTTP 40290067e9e181f6/diagram.png", b"\x89PNG not really")
+        z.writestr("__MACOSX/._junk.md", b"junk")
+    outer = io.BytesIO()
+    with zipfile.ZipFile(outer, "w") as z:
+        z.writestr("Export-1234-Part-1.zip", inner.getvalue())
+    return outer.getvalue()
+
+
+async def test_upload_whole_notion_export_zip(api):
+    response = await api.post("/api/imports/file", files={"file": ("Export-1234.zip", notion_export_zip())})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert [p["title"] for p in body["plans"]] == ["Week 2 · HTTP, async, Pydantic, Git, Docker, SQL",
+                                                  "Week 3 · HTTP, async, Pydantic, Git, Docker, SQL"]
+    assert body["created"] == 66
+    assert body["skipped"] == ["AIML DEV & LC CF 4029.md (AIML DEV & LC CF 4029.md has no tasks — expected '- [ ] …' lines (see docs/PLAN_FORMAT.md))"]
+    assert body["change_set"]["summary"] == "Imported 2 pages: 66 new, 0 updated"
+
+    again = (await api.post("/api/imports/file", files={"file": ("Export-1234.zip", notion_export_zip())})).json()
+    assert (again["created"], again["change_set"]) == (0, None)  # re-export updates in place
+
+    await api.post(f"/api/history/{body['change_set']['id']}/undo")  # one undo reverts the whole export
+    assert (await api.get("/api/state", params={"today": "2026-10-30"})).json()["tasks"] == 0
+
+
+async def test_upload_zip_without_plans(api):
+    import io
+    import zipfile
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as z:
+        z.writestr("photo.png", b"x")
+    response = await api.post("/api/imports/file", files={"file": ("pics.zip", buffer.getvalue())})
+    assert response.status_code == 422 and "No pages with tasks" in response.json()["detail"]
+    bad = await api.post("/api/imports/file", files={"file": ("broken.zip", b"not a zip")})
+    assert bad.status_code == 422

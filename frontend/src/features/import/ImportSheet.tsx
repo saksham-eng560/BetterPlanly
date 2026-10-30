@@ -17,8 +17,12 @@ function Result({ result }: { result: ImportResult }) {
     <div className="import-result" role="status">
       <Check size={18} strokeWidth={2.5} aria-hidden="true" />
       <span>
-        <strong>{result.plan.title}</strong>: {result.created} new, {result.updated} updated
+        <strong>{result.plans.length > 1 ? `${result.plans.length} pages` : result.plan.title}</strong>:{" "}
+        {result.created} new, {result.updated} updated
         {result.unchanged ? `, ${result.unchanged} unchanged` : ""}
+        {result.skipped.length > 0 && (
+          <span className="import-skipped"> · skipped {result.skipped.length} without tasks</span>
+        )}
       </span>
     </div>
   );
@@ -44,7 +48,7 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
       await refreshPlan();
       const changeSet = imported.change_set;
       toast({
-        message: `Imported “${imported.plan.title}”`,
+        message: imported.plans.length > 1 ? `Imported ${imported.plans.length} pages` : `Imported “${imported.plan.title}”`,
         action: changeSet ? { label: "Undo", run: () => void undo(changeSet.id) } : undefined,
       });
     } catch (error) {
@@ -83,7 +87,7 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
             >
               <FileUp size={36} strokeWidth={1.5} aria-hidden="true" />
               <p className="drop-title">Drop a plan file here</p>
-              <p className="drop-hint">Planly JSON or YAML, Markdown, or a Notion CSV export</p>
+              <p className="drop-hint">A whole Notion export (.zip), a Notion page (.md), a Notion CSV, or a Planly JSON/YAML plan</p>
               <button className="btn btn-filled" disabled={busy} onClick={() => input.current?.click()}>
                 {busy ? "Importing…" : "Choose File…"}
               </button>
@@ -91,7 +95,7 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
                 ref={input}
                 type="file"
                 hidden
-                accept=".json,.yaml,.yml,.md,.markdown,.csv"
+                accept=".zip,.json,.yaml,.yml,.md,.markdown,.csv"
                 onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }}
               />
             </div>
