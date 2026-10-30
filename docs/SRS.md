@@ -137,7 +137,7 @@ Priority: **M** = must (v1), **S** = should (v1 if time allows), **C** = could (
 | FR-4.2 | The Agent shall be a LangGraph graph with tools, not a bare LLM call; its tools shall be: list tasks, get task, create task, update task, reschedule task, re-plan day, find resources, save resource, evaluate progress, remember preference. | M |
 | FR-4.3 | After the user ticks or moves Tasks, the UI shall (if "Agent reacts to changes" is on) start a `task_event` run describing what changed — including whether a Task finished early or late — so the Agent can adjust the rest of the day. Rapid changes within 4 s are combined into one run. | M |
 | FR-4.4 | On the first open of a day with Missed tasks, the UI shall start a `day_review` run so the Agent can re-plan them. | M |
-| FR-4.5 | Re-planning shall use a deterministic scheduler: fixed Tasks stay put; flexible Tasks are packed by priority into free slots of the Day window from now (or window start) onward; overflow moves to the next day. | M |
+| FR-4.5 | Re-planning shall use a deterministic scheduler: fixed Tasks stay put; flexible Tasks still ahead keep their time unless they clash; passed, clashing and Missed tasks go into the first free slot of the Day window (by priority); with "pull earlier" the remaining day is re-packed from now; overflow moves to the next day. | M |
 | FR-4.6 | `find resources` shall return the Task's stored Resources; when `WEB_SEARCH_ENABLED=true` it shall also return web search results. The Agent may save useful results as Resources. | M |
 | FR-4.7 | The Agent shall store Preferences the user states and include them in every run's context. | M |
 | FR-4.8 | Every change made by the Agent shall be recorded with actor `agent`, and each run shall end with a summary of its Change sets that the UI shows with Undo. | M |
@@ -220,11 +220,11 @@ Each FR is verified by the tests listed. Paths are relative to `backend/tests/` 
 | FR-2.x | `frontend/src/features/timeline/` | `frontend/e2e/smoke.spec.ts` |
 | FR-3.x | `frontend/src/features/checklist/`, `app/api/tasks.py` | `test_api.py`, `frontend/e2e/smoke.spec.ts` |
 | FR-4.1–4.2 | `app/agent/` | `test_agent.py` |
-| FR-4.3–4.4 | `app/agent/triggers.py`, `frontend/src/features/chat/` | `test_agent.py::test_task_event_*`, `test_triggers.py` |
+| FR-4.3–4.4 | `app/agent/graph.py` (trigger messages), `frontend/src/features/chat/` | `test_agent.py::test_finishing_early_*`, `test_agent.py::test_day_review_*` |
 | FR-4.5 | `app/agent/scheduler.py` | `test_scheduler.py` |
 | FR-4.6–4.9 | `app/agent/tools.py` | `test_agent.py` |
-| FR-4.10 | `app/agent/runtime.py` | `test_agent.py::test_thread_survives_new_graph` |
-| FR-4.11 | `app/api/agent.py` | `test_api.py::test_agent_unavailable` |
+| FR-4.10 | `app/agent/runtime.py` | `test_agent.py::test_thread_survives_a_new_runtime` |
+| FR-4.11 | `app/agent/runtime.py`, `app/api/agent.py` | `test_agent.py::test_unreachable_ollama_is_reported` |
 | FR-5.1–5.3 | `app/services/tasks.py` | `test_task_service.py` |
 | FR-5.4–5.6 | `app/api/events.py`, `app/api/state.py` | `test_api.py::test_history_*`, `test_api.py::test_export_roundtrip` |
 

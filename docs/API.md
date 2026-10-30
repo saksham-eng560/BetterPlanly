@@ -73,5 +73,5 @@ Parse and validation errors return 422 `{"detail": "…", "errors": ["tasks[3].d
 
 | Method & path | Body | Notes |
 |---|---|---|
-| `POST /agent/runs` | `{"trigger": "chat", "message": "…", "now": "2026-10-30T10:05"}`<br/>`{"trigger": "task_event", "change_set_ids": [41, 42], "now": "…"}`<br/>`{"trigger": "day_review", "now": "…"}` | `text/event-stream`. Events are listed in [AGENT.md](AGENT.md#streaming-to-the-ui). 409 if a run is already active |
+| `POST /agent/runs` | `{"trigger": "chat", "message": "…", "now": "2026-10-30T10:05:00+05:30"}`<br/>`{"trigger": "task_event", "change_set_ids": [41, 42], "now": "…"}`<br/>`{"trigger": "day_review", "now": "…"}` | `text/event-stream`. Events are listed in [AGENT.md](AGENT.md#streaming-to-the-ui). 409 if a run is already active |
 | `GET /agent/thread` | | `{"messages": [{"role": "user" \| "assistant" \| "event" \| "tool", "content": "…", "tool_calls": [...]}]}` |

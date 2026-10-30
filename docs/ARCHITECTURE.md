@@ -43,12 +43,10 @@ flowchart TB
     svc["services/tasks.py<br/><b>TaskService</b><br/>the only writer"]
     imp["importers/<br/>parse → PlanDraft → persist"]
     subgraph agent[agent/]
-      graph[graph.py<br/>StateGraph]
+      rt[runtime.py<br/>AgentRuntime: runs, thread,<br/>checkpointer, Ollama]
+      graph[graph.py<br/>StateGraph, context,<br/>trigger messages]
       tools[tools.py]
       sched[scheduler.py<br/>pure]
-      ctx[context.py]
-      trig[triggers.py]
-      rt[runtime.py<br/>checkpointer + runs]
     end
   end
 
@@ -60,10 +58,9 @@ flowchart TB
   imports_r --> imp --> svc
   state_r --> imp
   agent_r --> rt --> graph
-  graph --> ctx
   graph --> tools --> svc
+  graph --> svc
   tools --> sched
-  agent_r --> trig
   svc --> models --> db
   rt -- "AsyncPostgresSaver" --> db
 ```

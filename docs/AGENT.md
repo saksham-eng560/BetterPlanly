@@ -28,7 +28,7 @@ The loop is capped (`recursion_limit = 24`, about 10 tool rounds).
 ```python
 class AgentState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]  # persisted conversation
-    now: str            # browser local time, ISO 8601, e.g. "2026-10-30T10:05"
+    now: str            # browser local time with UTC offset, e.g. "2026-10-30T10:05:00+05:30"
     run_id: str         # uuid of this run; tagged on every Change set the agent makes
     context: str        # rendered by load_context, rebuilt each run
     changes: list[dict] # Change sets made in this run (from summarize)
@@ -45,7 +45,7 @@ All tools are thin wrappers over `TaskService(actor="agent", agent_run_id=run_id
 | `create_task(title, type, date?, start?, duration_min?, priority?, notes?)` | Add a Task (for example, to split a big one). |
 | `update_task(task_id, title?, type?, duration_min?, priority?, notes?, status?)` | Edit fields, including marking done/skipped. |
 | `reschedule_task(task_id, date, start?)` | Move one Task. |
-| `replan_day(date)` | Run the deterministic Scheduler for that day (below). |
+| `replan_day(date, pull_earlier?)` | Run the deterministic Scheduler for that day (below). |
 | `find_resources(task_id, query?)` | Stored Resources; plus web results when `WEB_SEARCH_ENABLED=true`. |
 | `save_resource(task_id, title, url?, kind?, note?)` | Attach a Resource. |
 | `evaluate_progress(start_date, end_date)` | Done / todo / skipped / missed counts, by type, and completion rate. |
@@ -58,20 +58,22 @@ There is no delete tool (FR-4.9).
 A pure function, so the time arithmetic is done by tested code and not by the LLM (ADR-0001):
 
 ```
-replan(day, tasks, missed, now, window=(08:00, 22:00), default_duration=30)
-  fixed     = todo meetings on `day` (keep their times)
-  flexible  = other todo tasks on `day` + `missed` (when day is today)
-  order     = priority (high → low), then original start, then position
-  cursor    = max(window.start, now rounded up to 5 min)   # if day is today
-  for task in order:
-      slot = first gap ≥ cursor of length duration not overlapping fixed tasks or placed tasks
+replan(day, tasks, missed, now, window=(08:00, 22:00), compact=False)
+  cursor   = max(window.start, now rounded up to 5 min)   # if day is today; window.end if day is past
+  keep     = meetings (never move)
+             + flexible timed tasks still ahead of cursor that don't clash   # unless compact
+  place    = flexible tasks whose time has passed, clashing tasks, then missed tasks
+             (compact: every flexible timed task), ordered by priority then original start
+  for task in place:
+      earliest = cursor for missed/compact tasks, else max(cursor, its original start)   # clashes only push later
+      slot     = first gap ≥ earliest of the task's length (default 30 min) not overlapping kept/placed tasks
       if slot ends ≤ window.end → place it there
-      else → move it to day + 1 with no start time ("Anytime")
+      else → move it to day + 1 as Anytime
 ```
 
-Completed and skipped Tasks are never moved. The tool returns the moves it made, so the model can explain them.
+Anytime, completed and skipped Tasks are never moved. `replan_day(date, pull_earlier=true)` turns on `compact`, which the Agent uses when the user finished early and the rest of the day can move forward. The tool returns the moves it made, so the model can explain them. Tests: `tests/test_scheduler.py`.
 
-## Triggers (`agent/triggers.py`)
+## Triggers (`agent/graph.py`)
 
 Every run starts with a message that is saved in the Thread:
 
@@ -82,6 +84,15 @@ Every run starts with a message that is saved in the Thread:
 | `day_review` | UI, on the first open of a day with Missed tasks | `[day review] 2 missed tasks: #7 …, #9 …. Today has 5 tasks. Re-plan the missed tasks sensibly, then tell me what you did.` |
 
 Trigger messages are `HumanMessage(name="planly")`. The UI renders them as small grey chips, not as user bubbles.
+
+## Modules
+
+| Module | Interface |
+|---|---|
+| `agent/runtime.py` | `AgentRuntime.open(settings, sessionmaker, llm?)` → `stream(trigger, now, message?, change_set_ids?)`, `thread()`, `reachable()`, `busy`. The only thing the API touches. |
+| `agent/graph.py` | `build_graph(llm, sessionmaker, settings, checkpointer)`, plus the plain-code context and trigger-message rendering. |
+| `agent/tools.py` | `build_tools(sessionmaker, settings)` → the 10 tools. |
+| `agent/scheduler.py` | `replan(...)`, pure. |
 
 ## Persistence
 
