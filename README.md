@@ -90,7 +90,7 @@ Configuration lives in `backend/.env` (copy it from [`backend/.env.example`](bac
 make test
 ```
 
-That runs 46 backend tests against Postgres and the frontend unit tests:
+That runs 47 backend tests against Postgres and the frontend unit tests:
 - the change-set service and undo
 - every importer, with the Notion API mocked
 - the scheduler

@@ -32,10 +32,8 @@ flowchart LR
 ```mermaid
 flowchart TB
   subgraph api[app/api — HTTP adapters]
-    tasks_r[tasks.py]
-    imports_r[imports.py]
-    history_r[history.py]
-    state_r[state.py]
+    tasks_r[tasks.py<br/>tasks, checklist, resources]
+    state_r[state.py<br/>history/undo, import/export,<br/>preferences, state]
     agent_r[agent.py — SSE]
   end
 
@@ -54,9 +52,8 @@ flowchart TB
   db[(PostgreSQL)]
 
   tasks_r --> svc
-  history_r --> svc
-  imports_r --> imp --> svc
-  state_r --> imp
+  state_r --> svc
+  state_r --> imp --> svc
   agent_r --> rt --> graph
   graph --> tools --> svc
   graph --> svc

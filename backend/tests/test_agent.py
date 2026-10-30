@@ -148,3 +148,40 @@ async def test_unreachable_ollama_is_reported(settings, sessionmaker):
     error = next(d for k, d in events if k == "error")
     assert "Can't reach Ollama at http://127.0.0.1:9" in error["message"]
     assert events[-1][0] == "done"
+
+
+async def test_resource_and_progress_tools(runtime_factory, session, monkeypatch):
+    svc = TaskService(session)
+    task, _ = await svc.create_task(title="Learn asyncio", type="study", date=DAY, start_time=time(9), duration_min=60)
+    done, _ = await svc.create_task(title="Run", type="fitness", date=DAY)
+    await svc.complete(done.id)
+    await svc.create_task(title="Old", type="study", date=date(2026, 10, 29))
+
+    runtime, _ = await runtime_factory(
+        AIMessage(content="", tool_calls=[
+            call("find_resources", "c1", task_id=task.id),
+            call("save_resource", "c2", task_id=task.id, title="asyncio docs",
+                 url="https://docs.python.org/3/library/asyncio.html", kind="doc"),
+            call("evaluate_progress", "c3", start_date="2026-10-29", end_date="2026-10-30"),
+        ]),
+        AIMessage(content="Saved the docs."),
+    )
+    events = await collect(runtime.stream("chat", NOW, message="resources for asyncio?"))
+    results = {d["name"]: d["content"] for k, d in events if k == "tool_result"}
+    assert "Web search is off" in results["find_resources"]
+    assert results["save_resource"] == f'Saved "asyncio docs" to #{task.id}'
+    assert results["evaluate_progress"].startswith("3 tasks — done 1, todo 1, missed 1, skipped 0; completion 33%")
+    saved = (await svc.get_task(task.id)).resources
+    assert [(r.title, r.kind, r.added_by) for r in saved] == [("asyncio docs", "doc", "agent")]
+
+    # with web search on, results are appended (the search itself is stubbed)
+    import app.agent.tools as tools
+
+    monkeypatch.setattr(tools, "web_search", lambda q, max_results=5: [{"title": f"About {q}", "href": "https://example.org"}])
+    runtime.settings.web_search_enabled = True
+    find = next(t for t in tools.build_tools(runtime.sessionmaker, runtime.settings) if t.name == "find_resources")
+    web = await find.ainvoke(
+        {"type": "tool_call", "id": "x", "name": "find_resources",
+         "args": {"task_id": task.id, "state": {"run_id": "00000000-0000-0000-0000-000000000000", "now": NOW.isoformat()}}}
+    )
+    assert "About Learn asyncio — https://example.org" in web.content

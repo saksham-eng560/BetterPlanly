@@ -218,15 +218,15 @@ Each FR is verified by the tests listed. Paths are relative to `backend/tests/` 
 | FR-1.6–1.7 | `app/importers/persist.py` | `test_importers.py::test_reimport_*` |
 | FR-1.8 | `examples/AGENT_PROMPT.md` | Manual: prompt output validates against schema |
 | FR-2.x | `frontend/src/features/timeline/` | `frontend/e2e/smoke.spec.ts` |
-| FR-3.x | `frontend/src/features/checklist/`, `app/api/tasks.py` | `test_api.py`, `frontend/e2e/smoke.spec.ts` |
+| FR-3.x | `frontend/src/features/checklist/`, `app/api/tasks.py` | `test_api.py::test_tick_move_undo_and_history`, `test_api.py::test_create_patch_*`, `frontend/e2e/smoke.spec.ts` |
 | FR-4.1–4.2 | `app/agent/` | `test_agent.py` |
 | FR-4.3–4.4 | `app/agent/graph.py` (trigger messages), `frontend/src/features/chat/` | `test_agent.py::test_finishing_early_*`, `test_agent.py::test_day_review_*` |
 | FR-4.5 | `app/agent/scheduler.py` | `test_scheduler.py` |
-| FR-4.6–4.9 | `app/agent/tools.py` | `test_agent.py` |
+| FR-4.6–4.9 | `app/agent/tools.py` | `test_agent.py::test_resource_and_progress_tools`, `test_agent.py::test_chat_tools_*`, `test_agent.py::test_finishing_early_*` |
 | FR-4.10 | `app/agent/runtime.py` | `test_agent.py::test_thread_survives_a_new_runtime` |
 | FR-4.11 | `app/agent/runtime.py`, `app/api/agent.py` | `test_agent.py::test_unreachable_ollama_is_reported` |
 | FR-5.1–5.3 | `app/services/tasks.py` | `test_task_service.py` |
-| FR-5.4–5.6 | `app/api/events.py`, `app/api/state.py` | `test_api.py::test_history_*`, `test_api.py::test_export_roundtrip` |
+| FR-5.4–5.6 | `app/api/state.py`, `frontend/src/features/history/` | `test_api.py::test_tick_move_undo_and_history`, `test_api.py::test_export_roundtrip`, `test_api.py::test_state_and_preferences` |
 
 ## 6. Change history
 | Version | Date | Change |

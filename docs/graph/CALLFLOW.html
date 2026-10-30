@@ -1,0 +1,2949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gout2 — Complete Call Flow &amp; Architecture Documentation</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a; --surface: #1e293b; --border: #334155;
+  --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+  --warn: #fbbf24; --err: #f87171; --ok: #34d399;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+h1 { font-size: 2.4rem; margin-bottom: 8px; background: linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+h2 { font-size: 1.7rem; margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+h3 { font-size: 1.25rem; margin: 32px 0 12px; color: var(--accent); }
+h4 { font-size: 1.05rem; margin: 20px 0 8px; color: var(--warn); }
+p { margin: 8px 0; color: var(--muted); }
+.subtitle { color: var(--muted); font-size: 1.1rem; margin-bottom: 32px; }
+.mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; position: relative; }
+.mermaid.is-enhanced { padding: 0; overflow: hidden; min-height: 260px; }
+.mermaid-viewport { padding: 54px 24px 24px; overflow: hidden; cursor: grab; touch-action: none; min-height: 260px; }
+.mermaid-viewport.is-dragging { cursor: grabbing; }
+.mermaid-viewport svg { max-width: none !important; height: auto; transform-origin: 0 0; transition: transform 120ms ease; }
+.mermaid-toolbar { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 6px; padding: 6px; background: rgba(15,23,42,0.92); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
+.mermaid-toolbar button, .mermaid-toolbar .zoom-level { height: 28px; min-width: 32px; border: 1px solid var(--border); border-radius: 6px; background: #1e293b; color: var(--text); font: 600 0.78rem system-ui, sans-serif; display: inline-flex; align-items: center; justify-content: center; }
+.mermaid-toolbar button { cursor: pointer; }
+.mermaid-toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+.mermaid-toolbar .zoom-level { min-width: 52px; color: var(--muted); background: transparent; }
+.call-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.92rem; }
+.call-table th { background: #1a2744; color: var(--accent); text-align: left; padding: 10px 14px; border: 1px solid var(--border); }
+.call-table td { padding: 8px 14px; border: 1px solid var(--border); vertical-align: top; }
+.call-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+.tag-async { background: #7c3aed33; color: #a78bfa; }
+.tag-class { background: #05966933; color: var(--ok); }
+.tag-func { background: #2563eb33; color: var(--accent); }
+.tag-cmd { background: #d9770633; color: var(--warn); }
+.tag-endpoint { background: #dc262633; color: var(--err); }
+.tag-hook { background: #db277733; color: #f472b6; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin: 16px 0; }
+.arrow-chain { font-family: 'Fira Code', monospace; font-size: 0.85rem; color: var(--accent); padding: 10px; background: rgba(56,189,248,0.06); border-radius: 6px; }
+code { font-family: 'Fira Code', 'Cascadia Code', monospace; background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px; font-size: 0.88em; }
+ul, ol { margin: 8px 0 8px 24px; color: var(--muted); }
+li { margin: 4px 0; }
+a { color: var(--accent); }
+hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+.nav { position: sticky; top: 0; background: var(--bg); z-index: 10; padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem; }
+.nav a { text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+@media (max-width: 768px) { .container { padding: 16px; } h1 { font-size: 1.8rem; } }
+
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>gout2 — Complete Call Flow &amp; Architecture Documentation</h1>
+<p class="subtitle">Generated from graphify knowledge graph: 707 nodes, 1901 edges, 30 communities. Commit: 7bc6e83</p>
+
+<div class="nav">
+    <a href="#overview">Architecture Overview</a>
+    <a href="#build-graph">Graph Build</a>
+    <a href="#cli-skills">CLI &amp; Skill Installers</a>
+    <a href="#ingest-cache-update">Ingestion &amp; Updates</a>
+    <a href="#serve-api">Serving API</a>
+    <a href="#tests-fixtures">Tests &amp; Fixtures</a>
+    <a href="#agent-chat-store-sse">Agent chat store &amp; SSE</a>
+    <a href="#app-shell-data-hooks">App shell &amp; data hooks</a>
+    <a href="#fake-ollama-demo-server">Fake Ollama demo server</a>
+    <a href="#app-package">app package</a>
+    <a href="#services-package">services package</a>
+    <a href="#backend-project-metadata">backend project metadata</a>
+</div>
+
+<!-- ====== Architecture Overview ====== -->
+<h2 id="overview">1. Architecture Overview</h2>
+
+<div class="mermaid">
+
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    BUILD_GRAPH_321CBB04("Graph Build<br/><small>177 nodes</small>")
+    class BUILD_GRAPH_321CBB04 module;
+    CLI_SKILLS_9964CBB8("CLI &amp; Skill Installers<br/><small>107 nodes</small>")
+    class CLI_SKILLS_9964CBB8 module;
+    INGEST_CACHE_UPDATE_FF457338("Ingestion &amp; Updates<br/><small>66 nodes</small>")
+    class INGEST_CACHE_UPDATE_FF457338 module;
+    SERVE_API_35EC8E86("Serving API<br/><small>122 nodes</small>")
+    class SERVE_API_35EC8E86 module;
+    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>186 nodes</small>")
+    class TESTS_FIXTURES_B84B1DCC module;
+    AGENT_CHAT_STORE_SSE_A61132D8("Agent chat store &amp; SSE<br/><small>19 nodes</small>")
+    class AGENT_CHAT_STORE_SSE_A61132D8 module;
+    APP_SHELL_DATA_HOOKS_2A48A6C6("App shell &amp; data hooks<br/><small>16 nodes</small>")
+    class APP_SHELL_DATA_HOOKS_2A48A6C6 module;
+    FAKE_OLLAMA_DEMO_SERVER_3B00C30E("Fake Ollama demo server<br/><small>11 nodes</small>")
+    class FAKE_OLLAMA_DEMO_SERVER_3B00C30E module;
+    APP_PACKAGE_EDD025E3("app package<br/><small>1 nodes</small>")
+    class APP_PACKAGE_EDD025E3 module;
+    SERVICES_PACKAGE_93391361("services package<br/><small>1 nodes</small>")
+    class SERVICES_PACKAGE_93391361 module;
+    BACKEND_PROJECT_METADATA_C388006D("backend project metadata<br/><small>1 nodes</small>")
+    class BACKEND_PROJECT_METADATA_C388006D module;
+    CLI_SKILLS_9964CBB8 -->|imports x37| TESTS_FIXTURES_B84B1DCC
+    TESTS_FIXTURES_B84B1DCC -->|imports x33| CLI_SKILLS_9964CBB8
+    SERVE_API_35EC8E86 -->|imports x31| TESTS_FIXTURES_B84B1DCC
+    SERVE_API_35EC8E86 -->|imports x24| CLI_SKILLS_9964CBB8
+    BUILD_GRAPH_321CBB04 -->|calls x24| TESTS_FIXTURES_B84B1DCC
+    TESTS_FIXTURES_B84B1DCC -->|calls x21| INGEST_CACHE_UPDATE_FF457338
+    APP_SHELL_DATA_HOOKS_2A48A6C6 -->|imports x18| BUILD_GRAPH_321CBB04
+    TESTS_FIXTURES_B84B1DCC -->|imports x17| BUILD_GRAPH_321CBB04
+    CLI_SKILLS_9964CBB8 -->|imports x16| BUILD_GRAPH_321CBB04
+    BUILD_GRAPH_321CBB04 -->|imports x16| CLI_SKILLS_9964CBB8
+    INGEST_CACHE_UPDATE_FF457338 -->|imports x15| TESTS_FIXTURES_B84B1DCC
+    SERVE_API_35EC8E86 -->|imports x15| BUILD_GRAPH_321CBB04
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h4>Architecture Layers</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
+      <tr><td>Graph Build</td><td>177</td><td><code>4, 5, 7, 12, 17, 19, 21, 24</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>107</td><td><code>6, 8, 10, 15, 18, 25</code></td></tr><tr><td>Ingestion &amp; Updates</td><td>66</td><td><code>2</code></td></tr><tr><td>Serving API</td><td>122</td><td><code>1, 11, 13</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>186</td><td><code>0, 3, 9, 20, 23, 28</code></td></tr><tr><td>Agent chat store &amp; SSE</td><td>19</td><td><code>14</code></td></tr><tr><td>App shell &amp; data hooks</td><td>16</td><td><code>16</code></td></tr><tr><td>Fake Ollama demo server</td><td>11</td><td><code>22</code></td></tr><tr><td>app package</td><td>1</td><td><code>26</code></td></tr><tr><td>services package</td><td>1</td><td><code>27</code></td></tr><tr><td>backend project metadata</td><td>1</td><td><code>29</code></td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Core Flow</h4>
+    <div class="arrow-chain">Fake Ollama demo server -&gt; Ingestion &amp; Updates -&gt; Tests &amp; Fixtures -&gt; CLI &amp; Skill Installers -&gt; Graph Build -&gt; Serving API -&gt; App shell &amp; data hooks</div>
+  </div>
+</div>
+<div class="grid">
+  <div class="card">
+    <h4>Graph Report Highlights</h4>
+    <ul>
+      <li>707 nodes · 1901 edges · 30 communities (23 shown, 7 thin omitted)</li>
+      <li>Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 176 edges (avg confidence: 0.89)</li>
+      <li>Token cost: 0 input · 0 output</li>
+      <li>1. `TaskService` - 69 edges</li>
+      <li>2. `ChangeSet` - 27 edges</li>
+      <li>3. `Task` - 25 edges</li>
+    </ul>
+  </div>
+</div>
+<hr>
+<!-- ====== 2. Graph Build ====== -->
+<h2 id="build-graph">2. Graph Build</h2>
+<p>Graph Build groups implementation around frontend, docker, composeyml, packagejson, mostly in docker-compose.yml, frontend/package.json, frontend/tsconfig.json. This section covers 177 nodes and 252 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Graph Build (177 nodes, 252 edges)
+    subgraph build_graph_app_agent_graph_py_07582700["app/agent/graph.py"]
+        backend_app_agent_graph_4930ead4("graph.py")
+        backend_app_agent_graph_build_graph_42900c6a("build_graph()<br/><small>app/agent/graph.py</small>")
+        backend_app_agent_graph_build_graph_agent_a8275aa0("agent()<br/><small>app/agent/graph.py</small>")
+        backend_app_agent_graph_sendable_e3c670ff("_sendable()<br/><small>app/agent/graph.py</small>")
+        backend_app_agent_graph_build_graph_load_context_259b01c8("load_context()<br/><small>app/agent/graph.py</small>")
+        backend_app_agent_graph_task_event_message_e3013321("task_event_message()<br/><small>app/agent/graph.py</small>")
+        backend_app_agent_graph_minutes_between_5cd2c607("_minutes_between()<br/><small>app/agent/graph.py</small>")
+        backend_app_agent_graph_span_06ffdd97("_span()<br/><small>app/agent/graph.py</small>")
+    end
+    subgraph build_graph_src_components_toasts_tsx_7c287d02["src/components/toasts.tsx"]
+        frontend_src_components_toasts_toaster_214eece2("Toaster()<br/><small>src/components/toasts.tsx</small>")
+        frontend_src_components_toasts_usetoasts_44367557("useToasts<br/><small>src/components/toasts.tsx</small>")
+        frontend_src_components_toasts_toastpill_46cd0441("ToastPill()<br/><small>src/components/toasts.tsx</small>")
+    end
+    backend_alembic_versions_0001_initial_schema_upg_afbf5419("upgrade()<br/><small>alembic/versions/0001_initial_schema.py</small>")
+    backend_app_agent_tools_local_now_5220ed75("local_now()<br/><small>app/agent/tools.py</small>")
+    frontend_src_features_checklist_checklist_b4da3933("Checklist.tsx")
+    frontend_src_features_checklist_tasksheet_14ff37ea("TaskSheet.tsx")
+    frontend_src_features_timeline_daytimeline_00aaa05f("DayTimeline.tsx")
+    frontend_package_9c7557c1("package.json")
+    frontend_src_main_c1980e55("main.tsx")
+    frontend_src_components_toasts_toaster_214eece2 -->|calls| frontend_src_components_toasts_usetoasts_44367557
+    frontend_src_components_toasts_toaster_214eece2 -->|calls| frontend_src_components_toasts_toastpill_46cd0441
+    frontend_src_components_toasts_toastpill_46cd0441 -->|calls| frontend_src_components_toasts_usetoasts_44367557
+    backend_app_agent_graph_build_graph_42900c6a -->|calls| backend_app_agent_tools_local_now_5220ed75
+    backend_app_agent_graph_build_graph_agent_a8275aa0 -->|calls| backend_app_agent_graph_sendable_e3c670ff
+    backend_app_agent_graph_build_graph_load_context_259b01c8 -->|calls| backend_app_agent_tools_local_now_5220ed75
+    backend_app_agent_graph_task_event_message_e3013321 -->|calls| backend_app_agent_graph_minutes_between_5cd2c607
+    backend_app_agent_graph_task_event_message_e3013321 -->|calls| backend_app_agent_graph_span_06ffdd97
+    backend_app_agent_graph_4930ead4 -->|imports| backend_app_agent_tools_local_now_5220ed75
+    frontend_src_features_checklist_tasksheet_14ff37ea -->|imports| frontend_src_features_checklist_checklist_b4da3933
+    %% Omitted for readability: 159 nodes, 0 edges
+    class backend_app_agent_graph_4930ead4 module;
+    class backend_app_agent_graph_build_graph_42900c6a function;
+    class backend_app_agent_graph_build_graph_agent_a8275aa0 function;
+    class backend_app_agent_graph_sendable_e3c670ff function;
+    class backend_app_agent_graph_build_graph_load_context_259b01c8 function;
+    class backend_app_agent_graph_task_event_message_e3013321 function;
+    class backend_app_agent_graph_minutes_between_5cd2c607 function;
+    class backend_app_agent_graph_span_06ffdd97 function;
+    class frontend_src_components_toasts_toaster_214eece2 ui;
+    class frontend_src_components_toasts_usetoasts_44367557 ui;
+    class frontend_src_components_toasts_toastpill_46cd0441 ui;
+    class backend_alembic_versions_0001_initial_schema_upg_afbf5419 function;
+    class backend_app_agent_tools_local_now_5220ed75 function;
+    class frontend_src_features_checklist_checklist_b4da3933 ui;
+    class frontend_src_features_checklist_tasksheet_14ff37ea ui;
+    class frontend_src_features_timeline_daytimeline_00aaa05f ui;
+    class frontend_package_9c7557c1 function;
+    class frontend_src_main_c1980e55 ui;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>docker-compose.yml</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>docker-compose.yml node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>build</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>build node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>depends_on</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>depends_on node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>environment</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>environment node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>context</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>context node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>dockerfile</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>dockerfile node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>postgres</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>postgres node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>DATABASE_URL</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>DATABASE_URL node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>NOTION_TOKEN</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>NOTION_TOKEN node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>OLLAMA_BASE_URL</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>OLLAMA_BASE_URL node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>OLLAMA_HOST</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>OLLAMA_HOST node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>OLLAMA_MODEL</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>OLLAMA_MODEL node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>POSTGRES_DB</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>POSTGRES_DB node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>POSTGRES_PASSWORD</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>POSTGRES_PASSWORD node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>POSTGRES_USER</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>POSTGRES_USER node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>WEB_SEARCH_ENABLED</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>WEB_SEARCH_ENABLED node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>build</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>build node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>depends_on</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>depends_on node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>ports</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>ports node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>interval</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>interval node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>retries</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>retries node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>test</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>image</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>image node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>ports</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>ports node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>depends_on</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>depends_on node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td><code>entrypoint</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>entrypoint node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>environment</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>environment node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>image</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>image node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>restart</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>restart node in docker-compose.yml.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>volumes</code><br><small style="color:var(--muted)">docker-compose.yml</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>volumes node in docker-compose.yml.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>docker-compose.yml</code></td><td>44 nodes</td></tr>
+<tr><td><code>frontend/package.json</code></td><td>41 nodes</td></tr>
+<tr><td><code>frontend/tsconfig.json</code></td><td>16 nodes</td></tr>
+<tr><td><code>app/agent/graph.py</code></td><td>13 nodes</td></tr>
+<tr><td><code>features/timeline/DayTimeline.tsx</code></td><td>6 nodes</td></tr>
+<tr><td><code>frontend/e2e/smoke.spec.ts</code></td><td>5 nodes</td></tr>
+<tr><td><code>src/components/toasts.tsx</code></td><td>5 nodes</td></tr>
+<tr><td><code>features/checklist/Checklist.tsx</code></td><td>4 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x117, imports x41, imports x33, calls x31. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 3. CLI & Skill Installers ====== -->
+<h2 id="cli-skills">3. CLI &amp; Skill Installers</h2>
+<p>CLI &amp; Skill Installers groups implementation around backend, app, agent, toolspy, mostly in app/agent/tools.py, app/agent/runtime.py, backend/app/main.py. This section covers 107 nodes and 207 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: CLI &amp; Skill Installers (107 nodes, 207 edges)
+    subgraph cli_skills_app_agent_runtime_py_c3a327f7["app/agent/runtime.py"]
+        backend_app_agent_runtime_f8b3e1f2("runtime.py")
+        backend_app_agent_runtime_agentruntime_065b10d0("AgentRuntime<br/><small>app/agent/runtime.py</small>")
+        backend_app_agent_runtime_agentruntime_stream_58a89b09("stream()<br/><small>app/agent/runtime.py</small>")
+        backend_app_agent_runtime_agentruntime_thread_4f9166a6("thread()<br/><small>app/agent/runtime.py</small>")
+        backend_app_agent_runtime_agentruntime_reachable_c5507adf("reachable()<br/><small>app/agent/runtime.py</small>")
+        backend_app_agent_runtime_agentruntime_init_388b3b3b("__init__()<br/><small>app/agent/runtime.py</small>")
+        backend_app_agent_runtime_agentruntime_open_6dce3cc3("open()<br/><small>app/agent/runtime.py</small>")
+        backend_app_agent_runtime_agentruntime_busy_073d54e8("busy()<br/><small>app/agent/runtime.py</small>")
+        backend_app_agent_runtime_agentruntime_config_8ffd6b45("config()<br/><small>app/agent/runtime.py</small>")
+        backend_app_agent_runtime_agentruntime_first_mes_08f08d09("first_message()<br/><small>app/agent/runtime.py</small>")
+    end
+    subgraph cli_skills_app_agent_tools_py_2dccb9df["app/agent/tools.py"]
+        backend_app_agent_tools_b29a43cd("tools.py")
+        backend_app_agent_tools_build_tools_create_task_a4d6356f("create_task()<br/><small>app/agent/tools.py</small>")
+        backend_app_agent_tools_build_tools_replan_day_8606bd74("replan_day()<br/><small>app/agent/tools.py</small>")
+    end
+    subgraph cli_skills_backend_app_config_py_6f5e9a2c["backend/app/config.py"]
+        backend_app_config_settings_1213effd("Settings<br/><small>backend/app/config.py</small>")
+        backend_app_config_settings_sqlalchemy_url_8c1bb978("sqlalchemy_url()<br/><small>backend/app/config.py</small>")
+    end
+    backend_app_db_make_engine_36744ba9("make_engine()<br/><small>backend/app/db.py</small>")
+    backend_app_main_create_app_bb7e815c("create_app()<br/><small>backend/app/main.py</small>")
+    backend_tests_conftest_engine_d704ea4c("engine()<br/><small>backend/tests/conftest.py</small>")
+    backend_app_config_settings_1213effd -->|method| backend_app_config_settings_sqlalchemy_url_8c1bb978
+    backend_app_agent_runtime_agentruntime_065b10d0 -->|method| backend_app_agent_runtime_agentruntime_stream_58a89b09
+    backend_app_agent_runtime_agentruntime_065b10d0 -->|method| backend_app_agent_runtime_agentruntime_thread_4f9166a6
+    backend_app_agent_runtime_agentruntime_065b10d0 -->|method| backend_app_agent_runtime_agentruntime_reachable_c5507adf
+    backend_app_agent_runtime_agentruntime_065b10d0 -->|method| backend_app_agent_runtime_agentruntime_init_388b3b3b
+    backend_app_agent_runtime_agentruntime_065b10d0 -->|method| backend_app_agent_runtime_agentruntime_open_6dce3cc3
+    backend_app_agent_runtime_agentruntime_065b10d0 -->|method| backend_app_agent_runtime_agentruntime_busy_073d54e8
+    backend_app_agent_runtime_agentruntime_065b10d0 -->|method| backend_app_agent_runtime_agentruntime_config_8ffd6b45
+    backend_app_agent_runtime_agentruntime_065b10d0 -->|method| backend_app_agent_runtime_agentruntime_first_mes_08f08d09
+    backend_tests_conftest_engine_d704ea4c -->|calls| backend_app_db_make_engine_36744ba9
+    backend_app_main_create_app_bb7e815c -->|calls| backend_app_db_make_engine_36744ba9
+    backend_app_agent_runtime_agentruntime_stream_58a89b09 -->|calls| backend_app_agent_runtime_agentruntime_first_mes_08f08d09
+    backend_app_agent_tools_b29a43cd -->|imports| backend_app_config_settings_1213effd
+    backend_app_agent_runtime_f8b3e1f2 -->|imports| backend_app_config_settings_1213effd
+    backend_app_agent_runtime_agentruntime_065b10d0 -->|uses| backend_app_config_settings_1213effd
+    backend_app_main_create_app_bb7e815c -->|uses| backend_app_config_settings_1213effd
+    backend_app_main_create_app_bb7e815c -->|uses| backend_app_agent_runtime_agentruntime_065b10d0
+    %% Omitted for readability: 89 nodes, 0 edges
+    class backend_app_agent_runtime_f8b3e1f2 module;
+    class backend_app_agent_runtime_agentruntime_065b10d0 klass;
+    class backend_app_agent_runtime_agentruntime_stream_58a89b09 async;
+    class backend_app_agent_runtime_agentruntime_thread_4f9166a6 function;
+    class backend_app_agent_runtime_agentruntime_reachable_c5507adf function;
+    class backend_app_agent_runtime_agentruntime_init_388b3b3b function;
+    class backend_app_agent_runtime_agentruntime_open_6dce3cc3 function;
+    class backend_app_agent_runtime_agentruntime_busy_073d54e8 function;
+    class backend_app_agent_runtime_agentruntime_config_8ffd6b45 function;
+    class backend_app_agent_runtime_agentruntime_first_mes_08f08d09 function;
+    class backend_app_agent_tools_b29a43cd module;
+    class backend_app_agent_tools_build_tools_create_task_a4d6356f function;
+    class backend_app_agent_tools_build_tools_replan_day_8606bd74 function;
+    class backend_app_config_settings_1213effd klass;
+    class backend_app_config_settings_sqlalchemy_url_8c1bb978 function;
+    class backend_app_db_make_engine_36744ba9 function;
+    class backend_app_main_create_app_bb7e815c function;
+    class backend_tests_conftest_engine_d704ea4c test;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>AgentBusy</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>agent.py</code><br><small style="color:var(--muted)">app/api/agent.py</small><br><code>run()</code><br><small style="color:var(--muted)">app/api/agent.py</small><br><code>stream()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br>+2 more</td>
+  <td>No direct outbound edge</td>
+  <td>AgentBusy node in app/agent/runtime.py.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>create_app()</code><br><small style="color:var(--muted)">backend/app/main.py</small><br><code>deps.py</code><br><small style="color:var(--muted)">app/api/deps.py</small><br><code>get_runtime()</code><br><small style="color:var(--muted)">app/api/deps.py</small><br>+4 more</td>
+  <td><code>__init__()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>busy()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>config()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br>+7 more</td>
+  <td>AgentRuntime node in app/agent/runtime.py.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>.busy()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>.busy() node in app/agent/runtime.py.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>.config()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>Reads, resolves, or persists project configuration.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>trigger_human_message()</code><br><small style="color:var(--muted)">app/agent/graph.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>first_message()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>trigger_human_message() node in app/agent/graph.py.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>.first_message()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>stream()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><code>day_review_message()</code><br><small style="color:var(--muted)">app/agent/graph.py</small><br><code>session()</code><br><small style="color:var(--muted)">backend/tests/conftest.py</small><br><code>task_event_message()</code><br><small style="color:var(--muted)">app/agent/graph.py</small><br>+2 more</td>
+  <td>.first_message() node in app/agent/runtime.py.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>day_review_message()</code><br><small style="color:var(--muted)">app/agent/graph.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>first_message()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><code>describe_day()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>list_tasks()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>TaskService</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td>day_review_message() node in app/agent/graph.py.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>.reachable()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>.reachable() node in app/agent/runtime.py.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>.stream()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><code>AgentBusy</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>first_message()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>.stream() node in app/agent/runtime.py.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>.thread()</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>.thread() node in app/agent/runtime.py.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>HumanMessage</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>HumanMessage node in project.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-class">Module</span></td>
+  <td><code>agent.py</code><br><small style="color:var(--muted)">app/api/agent.py</small><br><code>deps.py</code><br><small style="color:var(--muted)">app/api/deps.py</small><br><code>main.py</code><br><small style="color:var(--muted)">backend/app/main.py</small><br>+1 more</td>
+  <td><code>asyncio</code><br><code>build_graph()</code><br><small style="color:var(--muted)">app/agent/graph.py</small><br><code>checkpoint postgres aio</code><br>+22 more</td>
+  <td>Module file in app/agent/runtime.py.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>datetime</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>datetime node in project.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>HumanMessage</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>HumanMessage node in project.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>RuntimeError</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>RuntimeError node in project.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>fakes.py</code><br><small style="color:var(--muted)">backend/tests/fakes.py</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>test_agent.py</code><br><small style="color:var(--muted)">backend/tests/test_agent.py</small><br><code>test_api.py</code><br><small style="color:var(--muted)">backend/tests/test_api.py</small></td>
+  <td><code>core language models</code><br><code>langchain_core_messages</code><br><code>langchain_core_outputs</code><br>+2 more</td>
+  <td>Module file in backend/tests/fakes.py.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>Trigger</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Trigger node in project.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>AgentRuntime: the one interface the API uses to run and inspect the agent. Owns…</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Design note for AgentRuntime: the one interface the API uses to run and inspect the agent. Owns….</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>Run the agent once, yielding (event, data) pairs: token, tool_call,…</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Design note for Run the agent once, yielding (event, data) pairs: token, tool_call,….</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>contextlib</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>main.py</code><br><small style="color:var(--muted)">backend/app/main.py</small><br><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>tasks.py</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>contextlib node in project.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>langchain_core_language_models</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>fakes.py</code><br><small style="color:var(--muted)">backend/tests/fakes.py</small><br><code>graph.py</code><br><small style="color:var(--muted)">app/agent/graph.py</small><br><code>main.py</code><br><small style="color:var(--muted)">backend/app/main.py</small><br>+1 more</td>
+  <td>No direct outbound edge</td>
+  <td>langchain_core_language_models node in project.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>langchain_core_messages</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>fakes.py</code><br><small style="color:var(--muted)">backend/tests/fakes.py</small><br><code>graph.py</code><br><small style="color:var(--muted)">app/agent/graph.py</small><br><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br>+2 more</td>
+  <td>No direct outbound edge</td>
+  <td>langchain_core_messages node in project.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>langchain_core_outputs</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>fakes.py</code><br><small style="color:var(--muted)">backend/tests/fakes.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>langchain_core_outputs node in project.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>langgraph_checkpoint_postgres_aio</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>Builds dependency relationships and graph data.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>langgraph_errors</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>Builds dependency relationships and graph data.</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td><code>psycopg_pool</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>psycopg_pool node in project.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>psycopg_rows</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>psycopg_rows node in project.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>pydantic</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>fakes.py</code><br><small style="color:var(--muted)">backend/tests/fakes.py</small><br><code>schemas.py</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>pydantic node in project.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>time</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>runtime.py</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>time node in project.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>session()</code><br><small style="color:var(--muted)">backend/tests/conftest.py</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>create_task()</code><br><small style="color:var(--muted)">app/agent/tools.py</small><br><code>evaluate_progress()</code><br><small style="color:var(--muted)">app/agent/tools.py</small><br><code>find_resources()</code><br><small style="color:var(--muted)">app/agent/tools.py</small><br>+10 more</td>
+  <td><code>sessionmaker()</code><br><small style="color:var(--muted)">backend/tests/conftest.py</small></td>
+  <td>session() node in backend/tests/conftest.py.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>app/agent/tools.py</code></td><td>21 nodes</td></tr>
+<tr><td><code>app/agent/runtime.py</code></td><td>15 nodes</td></tr>
+<tr><td><code>backend/app/main.py</code></td><td>7 nodes</td></tr>
+<tr><td><code>backend/tests/conftest.py</code></td><td>5 nodes</td></tr>
+<tr><td><code>backend/alembic/env.py</code></td><td>4 nodes</td></tr>
+<tr><td><code>backend/app/config.py</code></td><td>4 nodes</td></tr>
+<tr><td><code>app/agent/graph.py</code></td><td>3 nodes</td></tr>
+<tr><td><code>backend/app/db.py</code></td><td>3 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x58, references x32, indirect call x28, contains x27. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 4. Ingestion & Updates ====== -->
+<h2 id="ingest-cache-update">4. Ingestion &amp; Updates</h2>
+<p>Ingestion &amp; Updates groups implementation around importers, backend, app, fieldspy, mostly in app/importers/fields.py, app/importers/notion.py, app/importers/draft.py. This section covers 66 nodes and 168 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Ingestion &amp; Updates (66 nodes, 168 edges)
+    subgraph ingest_cache_update_app_importers_notion_py_874a8f7a["app/importers/notion.py"]
+        backend_app_importers_notion_95df58fc("notion.py")
+        backend_app_importers_notion_parse_notion_csv_0b01cea1("parse_notion_csv()<br/><small>app/importers/notion.py</small>")
+        backend_app_importers_notion_page_to_draft_value_eabb215a("value()<br/><small>app/importers/notion.py</small>")
+        backend_app_importers_notion_column_lookup_find_afa509be("find()<br/><small>app/importers/notion.py</small>")
+        backend_app_importers_notion_plain_2867d12a("_plain()<br/><small>app/importers/notion.py</small>")
+        backend_app_importers_notion_fetch_notion_databa_62f77743("fetch_notion_database()<br/><small>app/importers/notion.py</small>")
+        backend_app_importers_notion_normalize_database_72f22ff5("normalize_database_id()<br/><small>app/importers/notion.py</small>")
+    end
+    subgraph ingest_cache_update_app_importers_draft_py_ff892f1a["app/importers/draft.py"]
+        backend_app_importers_draft_planparseerror_5413d8a6("PlanParseError<br/><small>app/importers/draft.py</small>")
+        backend_app_importers_draft_planparseerror_init_c4eda014("__init__()<br/><small>app/importers/draft.py</small>")
+        backend_app_importers_draft_resourcedraft_31710da6("ResourceDraft<br/><small>app/importers/draft.py</small>")
+        backend_app_importers_draft_plandraft_3de8dafd("PlanDraft<br/><small>app/importers/draft.py</small>")
+        backend_app_importers_draft_checklistdraft_e8ecf9de("ChecklistDraft<br/><small>app/importers/draft.py</small>")
+    end
+    subgraph ingest_cache_update_app_importers_markdown_py_3a21ef00["app/importers/markdown.py"]
+        backend_app_importers_markdown_bf99997d("markdown.py")
+        backend_app_importers_markdown_parse_markdown_4a653c0d("parse_markdown()<br/><small>app/importers/markdown.py</small>")
+        backend_app_importers_markdown_parse_task_line_493624d6("_parse_task_line()<br/><small>app/importers/markdown.py</small>")
+    end
+    subgraph ingest_cache_update_app_importers_plan_file_py_c7020775["app/importers/plan_file.py"]
+        backend_app_importers_plan_file_a4717c64("plan_file.py")
+        backend_app_importers_plan_file_parse_plan_file_0fde369a("parse_plan_file()<br/><small>app/importers/plan_file.py</small>")
+    end
+    backend_app_importers_init_d2650be4("__init__.py")
+    backend_app_importers_draft_planparseerror_5413d8a6 -->|method| backend_app_importers_draft_planparseerror_init_c4eda014
+    backend_app_importers_notion_page_to_draft_value_eabb215a -->|calls| backend_app_importers_notion_column_lookup_find_afa509be
+    backend_app_importers_notion_page_to_draft_value_eabb215a -->|calls| backend_app_importers_notion_plain_2867d12a
+    backend_app_importers_markdown_parse_markdown_4a653c0d -->|calls| backend_app_importers_draft_resourcedraft_31710da6
+    backend_app_importers_markdown_parse_markdown_4a653c0d -->|calls| backend_app_importers_draft_planparseerror_5413d8a6
+    backend_app_importers_markdown_parse_markdown_4a653c0d -->|calls| backend_app_importers_draft_plandraft_3de8dafd
+    backend_app_importers_markdown_parse_markdown_4a653c0d -->|calls| backend_app_importers_markdown_parse_task_line_493624d6
+    backend_app_importers_markdown_parse_markdown_4a653c0d -->|calls| backend_app_importers_draft_checklistdraft_e8ecf9de
+    backend_app_importers_notion_fetch_notion_databa_62f77743 -->|calls| backend_app_importers_notion_normalize_database_72f22ff5
+    backend_app_importers_notion_fetch_notion_databa_62f77743 -->|calls| backend_app_importers_draft_planparseerror_5413d8a6
+    backend_app_importers_notion_fetch_notion_databa_62f77743 -->|calls| backend_app_importers_draft_plandraft_3de8dafd
+    backend_app_importers_notion_parse_notion_csv_0b01cea1 -->|calls| backend_app_importers_draft_plandraft_3de8dafd
+    backend_app_importers_notion_parse_notion_csv_0b01cea1 -->|calls| backend_app_importers_draft_planparseerror_5413d8a6
+    backend_app_importers_notion_parse_notion_csv_0b01cea1 -->|calls| backend_app_importers_notion_column_lookup_find_afa509be
+    backend_app_importers_plan_file_parse_plan_file_0fde369a -->|calls| backend_app_importers_draft_planparseerror_5413d8a6
+    backend_app_importers_plan_file_parse_plan_file_0fde369a -->|calls| backend_app_importers_draft_checklistdraft_e8ecf9de
+    backend_app_importers_plan_file_parse_plan_file_0fde369a -->|calls| backend_app_importers_draft_resourcedraft_31710da6
+    backend_app_importers_plan_file_parse_plan_file_0fde369a -->|calls| backend_app_importers_draft_plandraft_3de8dafd
+    backend_app_importers_notion_normalize_database_72f22ff5 -->|calls| backend_app_importers_draft_planparseerror_5413d8a6
+    backend_app_importers_init_d2650be4 -->|imports| backend_app_importers_markdown_parse_markdown_4a653c0d
+    backend_app_importers_init_d2650be4 -->|imports| backend_app_importers_notion_fetch_notion_databa_62f77743
+    backend_app_importers_init_d2650be4 -->|imports| backend_app_importers_notion_parse_notion_csv_0b01cea1
+    backend_app_importers_init_d2650be4 -->|imports| backend_app_importers_plan_file_parse_plan_file_0fde369a
+    backend_app_importers_init_d2650be4 -->|imports| backend_app_importers_draft_plandraft_3de8dafd
+    %% Omitted for readability: 48 nodes, 12 edges
+    class backend_app_importers_notion_95df58fc module;
+    class backend_app_importers_notion_parse_notion_csv_0b01cea1 function;
+    class backend_app_importers_notion_page_to_draft_value_eabb215a function;
+    class backend_app_importers_notion_column_lookup_find_afa509be function;
+    class backend_app_importers_notion_plain_2867d12a function;
+    class backend_app_importers_notion_fetch_notion_databa_62f77743 function;
+    class backend_app_importers_notion_normalize_database_72f22ff5 function;
+    class backend_app_importers_draft_planparseerror_5413d8a6 klass;
+    class backend_app_importers_draft_planparseerror_init_c4eda014 function;
+    class backend_app_importers_draft_resourcedraft_31710da6 klass;
+    class backend_app_importers_draft_plandraft_3de8dafd klass;
+    class backend_app_importers_draft_checklistdraft_e8ecf9de klass;
+    class backend_app_importers_markdown_bf99997d module;
+    class backend_app_importers_markdown_parse_markdown_4a653c0d function;
+    class backend_app_importers_markdown_parse_task_line_493624d6 function;
+    class backend_app_importers_plan_file_a4717c64 module;
+    class backend_app_importers_plan_file_parse_plan_file_0fde369a function;
+    class backend_app_importers_init_d2650be4 module;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>ChecklistDraft</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>markdown.py</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br><code>parse_markdown()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br><code>parse_plan_file()</code><br><small style="color:var(--muted)">app/importers/plan_file.py</small><br>+1 more</td>
+  <td>No direct outbound edge</td>
+  <td>ChecklistDraft node in app/importers/draft.py.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>PlanDraft</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>__init__.py</code><br><small style="color:var(--muted)">app/importers/__init__.py</small><br><code>fetch_notion_database()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>markdown.py</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br>+8 more</td>
+  <td>No direct outbound edge</td>
+  <td>PlanDraft node in app/importers/draft.py.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>PlanParseError</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>__init__.py</code><br><small style="color:var(--muted)">app/importers/__init__.py</small><br><code>fetch_notion_database()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>main.py</code><br><small style="color:var(--muted)">backend/app/main.py</small><br>+9 more</td>
+  <td><code>__init__()</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td>PlanParseError node in app/importers/draft.py.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>ResourceDraft</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>markdown.py</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br><code>notion.py</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br>+3 more</td>
+  <td>No direct outbound edge</td>
+  <td>ResourceDraft node in app/importers/draft.py.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>TaskDraft</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>_dedupe_ids()</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br><code>_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>_page_to_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br>+8 more</td>
+  <td>No direct outbound edge</td>
+  <td>TaskDraft node in app/importers/draft.py.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>value()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>_plain()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>find()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td>value() node in app/importers/notion.py.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>_plain()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_page_to_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>value()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>_plain() node in app/importers/notion.py.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>_yaml_scalars_to_strings()</code><br><small style="color:var(--muted)">app/importers/plan_file.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>parse_plan_file()</code><br><small style="color:var(--muted)">app/importers/plan_file.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>_yaml_scalars_to_strings() node in app/importers/plan_file.py.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>_validator()</code><br><small style="color:var(--muted)">app/importers/plan_file.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>parse_plan_file()</code><br><small style="color:var(--muted)">app/importers/plan_file.py</small></td>
+  <td><code>get_settings()</code><br><small style="color:var(--muted)">backend/app/config.py</small><br><code>json</code></td>
+  <td>_validator() node in app/importers/plan_file.py.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>parse_markdown()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>__init__.py</code><br><small style="color:var(--muted)">app/importers/__init__.py</small><br><code>parse_upload()</code><br><small style="color:var(--muted)">app/importers/__init__.py</small></td>
+  <td><code>_parse_task_line()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br><code>ChecklistDraft</code><br><small style="color:var(--muted)">app/importers/draft.py</small><br><code>PlanDraft</code><br><small style="color:var(--muted)">app/importers/draft.py</small><br>+3 more</td>
+  <td>Exports documentation data to a target format.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>fetch_notion_database()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>__init__.py</code><br><small style="color:var(--muted)">app/importers/__init__.py</small><br><code>a parse error()</code><br><small style="color:var(--muted)">backend/tests/test_importers.py</small><br><code>and maps properties()</code><br><small style="color:var(--muted)">backend/tests/test_importers.py</small><br>+3 more</td>
+  <td><code>_page_to_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>httpx</code><br><code>normalize_database_id()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br>+3 more</td>
+  <td>fetch_notion_database() node in app/importers/notion.py.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>parse_notion_csv()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>__init__.py</code><br><small style="color:var(--muted)">app/importers/__init__.py</small><br><code>parse_upload()</code><br><small style="color:var(--muted)">app/importers/__init__.py</small></td>
+  <td><code>_column_lookup()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>csv</code><br>+7 more</td>
+  <td>parse_notion_csv() node in app/importers/notion.py.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>parse_plan_file()</code><br><small style="color:var(--muted)">app/importers/plan_file.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>__init__.py</code><br><small style="color:var(--muted)">app/importers/__init__.py</small><br><code>parse_upload()</code><br><small style="color:var(--muted)">app/importers/__init__.py</small></td>
+  <td><code>_validator()</code><br><small style="color:var(--muted)">app/importers/plan_file.py</small><br><code>_yaml_scalars_to_strings()</code><br><small style="color:var(--muted)">app/importers/plan_file.py</small><br><code>ChecklistDraft</code><br><small style="color:var(--muted)">app/importers/draft.py</small><br>+7 more</td>
+  <td>parse_plan_file() node in app/importers/plan_file.py.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>_parse_task_line()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>parse_markdown()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small></td>
+  <td><code>_split_meta()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br><code>derived_id()</code><br><small style="color:var(--muted)">app/importers/fields.py</small><br><code>TaskDraft</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td>_parse_task_line() node in app/importers/markdown.py.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_page_to_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>parse_notion_csv()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><code>derived_id()</code><br><small style="color:var(--muted)">app/importers/fields.py</small><br><code>normalize_priority()</code><br><small style="color:var(--muted)">app/importers/fields.py</small><br><code>normalize_type()</code><br><small style="color:var(--muted)">app/importers/fields.py</small><br>+2 more</td>
+  <td>_draft() node in app/importers/notion.py.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>_page_to_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>fetch_notion_database()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><code>_column_lookup()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>_plain()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br>+4 more</td>
+  <td>Organizes documentation pages, navigation, or content lookup.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>.__init__()</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>PlanParseError</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>.__init__() node in app/importers/draft.py.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>derived_id()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>_parse_task_line()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br><code>markdown.py</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br>+3 more</td>
+  <td><code>slug()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td>derived_id() node in app/importers/fields.py.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>normalize_priority()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>_split_meta()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br><code>markdown.py</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br>+1 more</td>
+  <td>No direct outbound edge</td>
+  <td>normalize_priority() node in app/importers/fields.py.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>normalize_status()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_page_to_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>notion.py</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>parse_notion_csv()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>normalize_status() node in app/importers/fields.py.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>normalize_type()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>_split_meta()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br><code>markdown.py</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br>+1 more</td>
+  <td>No direct outbound edge</td>
+  <td>normalize_type() node in app/importers/fields.py.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>parse_duration()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_page_to_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>_split_meta()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br><code>markdown.py</code><br><small style="color:var(--muted)">app/importers/markdown.py</small><br>+2 more</td>
+  <td>No direct outbound edge</td>
+  <td>parse_duration() node in app/importers/fields.py.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>parse_iso_when()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_page_to_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>notion.py</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>parse_iso_when() node in app/importers/fields.py.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>parse_notion_when()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>notion.py</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>parse_notion_csv()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><code>re</code></td>
+  <td>parse_notion_when() node in app/importers/fields.py.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>slug()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>derived_id()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td><code>re</code><br><code>unicodedata</code></td>
+  <td>slug() node in app/importers/fields.py.</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td><code>finish()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>finish() node in app/importers/markdown.py.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>_split_meta()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_parse_task_line()</code><br><small style="color:var(--muted)">app/importers/markdown.py</small></td>
+  <td><code>normalize_priority()</code><br><small style="color:var(--muted)">app/importers/fields.py</small><br><code>normalize_type()</code><br><small style="color:var(--muted)">app/importers/fields.py</small><br><code>parse_duration()</code><br><small style="color:var(--muted)">app/importers/fields.py</small></td>
+  <td>_split_meta() node in app/importers/markdown.py.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>_column_lookup()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_page_to_draft()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>parse_notion_csv()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><code>find()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td>_column_lookup() node in app/importers/notion.py.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>find()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_column_lookup()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>cell()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br><code>parse_notion_csv()</code><br><small style="color:var(--muted)">app/importers/notion.py</small><br>+1 more</td>
+  <td>No direct outbound edge</td>
+  <td>find() node in app/importers/notion.py.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>normalize_database_id()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>fetch_notion_database()</code><br><small style="color:var(--muted)">app/importers/notion.py</small></td>
+  <td><code>PlanParseError</code><br><small style="color:var(--muted)">app/importers/draft.py</small><br><code>re</code></td>
+  <td>normalize_database_id() node in app/importers/notion.py.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>app/importers/fields.py</code></td><td>14 nodes</td></tr>
+<tr><td><code>app/importers/notion.py</code></td><td>13 nodes</td></tr>
+<tr><td><code>app/importers/draft.py</code></td><td>8 nodes</td></tr>
+<tr><td><code>app/importers/markdown.py</code></td><td>7 nodes</td></tr>
+<tr><td><code>app/importers/plan_file.py</code></td><td>6 nodes</td></tr>
+<tr><td><code>app/importers/__init__.py</code></td><td>2 nodes</td></tr>
+<tr><td><code>app/services/tasks.py</code></td><td>1 nodes</td></tr>
+<tr><td><code>tests/fixtures/plan.yaml</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x53, imports x39, contains x29, explains x13. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 5. Serving API ====== -->
+<h2 id="serve-api">5. Serving API</h2>
+<p>Serving API groups implementation around app, backend, api, frontend, mostly in backend/app/schemas.py, src/lib/api.ts, app/api/tasks.py. This section covers 122 nodes and 279 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Serving API (122 nodes, 279 edges)
+    subgraph serve_api_backend_app_schemas_py_667b2ff8["backend/app/schemas.py"]
+        backend_app_schemas_changesetout_2295b2be("ChangeSetOut<br/><small>backend/app/schemas.py</small>")
+        backend_app_schemas_changesetout_of_0d38f064("of()<br/><small>backend/app/schemas.py</small>")
+        backend_app_schemas_preferenceout_22be5638("PreferenceOut<br/><small>backend/app/schemas.py</small>")
+        backend_app_schemas_preferenceout_of_99ed0b8f("of()<br/><small>backend/app/schemas.py</small>")
+        backend_app_schemas_taskout_52638fbf("TaskOut<br/><small>backend/app/schemas.py</small>")
+        backend_app_schemas_taskout_of_78db2867("of()<br/><small>backend/app/schemas.py</small>")
+        backend_app_schemas_taskpatchin_1352367d("TaskPatchIn<br/><small>backend/app/schemas.py</small>")
+        backend_app_schemas_taskpatchin_fields_dfb4a7ba("fields()<br/><small>backend/app/schemas.py</small>")
+        backend_app_schemas_importout_47e4f7b8("ImportOut<br/><small>backend/app/schemas.py</small>")
+    end
+    subgraph serve_api_app_api_state_py_07afaa6d["app/api/state.py"]
+        backend_app_api_state_d9fb7313("state.py")
+        backend_app_api_state_persist_b57f3471("_persist()<br/><small>app/api/state.py</small>")
+    end
+    subgraph serve_api_src_lib_api_ts_4018941b["src/lib/api.ts"]
+        frontend_src_lib_api_apierror_53221665("ApiError<br/><small>src/lib/api.ts</small>")
+        frontend_src_lib_api_apierror_constructor_b02dccd9("constructor()<br/><small>src/lib/api.ts</small>")
+    end
+    backend_app_api_agent_bf1f6477("agent.py")
+    backend_app_api_tasks_a790a8f6("tasks.py")
+    backend_app_main_4d9a7320("main.py")
+    frontend_src_features_history_historypopover_ef337edb("HistoryPopover.tsx")
+    frontend_src_features_import_importsheet_334ccb63("ImportSheet.tsx")
+    backend_app_schemas_changesetout_2295b2be -->|method| backend_app_schemas_changesetout_of_0d38f064
+    backend_app_schemas_preferenceout_22be5638 -->|method| backend_app_schemas_preferenceout_of_99ed0b8f
+    backend_app_schemas_taskout_52638fbf -->|method| backend_app_schemas_taskout_of_78db2867
+    backend_app_schemas_taskpatchin_1352367d -->|method| backend_app_schemas_taskpatchin_fields_dfb4a7ba
+    frontend_src_lib_api_apierror_53221665 -->|method| frontend_src_lib_api_apierror_constructor_b02dccd9
+    backend_app_api_state_persist_b57f3471 -->|calls| backend_app_schemas_importout_47e4f7b8
+    backend_app_api_state_persist_b57f3471 -->|calls| backend_app_schemas_changesetout_of_0d38f064
+    backend_app_api_state_d9fb7313 -->|imports| backend_app_schemas_changesetout_2295b2be
+    backend_app_api_state_d9fb7313 -->|imports| backend_app_schemas_importout_47e4f7b8
+    backend_app_api_state_d9fb7313 -->|imports| backend_app_schemas_preferenceout_22be5638
+    backend_app_api_tasks_a790a8f6 -->|imports| backend_app_schemas_changesetout_2295b2be
+    backend_app_api_tasks_a790a8f6 -->|imports| backend_app_schemas_taskout_52638fbf
+    backend_app_api_tasks_a790a8f6 -->|imports| backend_app_schemas_taskpatchin_1352367d
+    backend_app_main_4d9a7320 -->|imports| backend_app_api_agent_bf1f6477
+    backend_app_main_4d9a7320 -->|imports| backend_app_api_state_d9fb7313
+    backend_app_main_4d9a7320 -->|imports| backend_app_api_tasks_a790a8f6
+    frontend_src_features_import_importsheet_334ccb63 -->|imports| frontend_src_lib_api_apierror_53221665
+    backend_app_api_state_persist_b57f3471 -->|uses| backend_app_schemas_changesetout_2295b2be
+    %% Omitted for readability: 104 nodes, 0 edges
+    class backend_app_schemas_changesetout_2295b2be klass;
+    class backend_app_schemas_changesetout_of_0d38f064 function;
+    class backend_app_schemas_preferenceout_22be5638 klass;
+    class backend_app_schemas_preferenceout_of_99ed0b8f function;
+    class backend_app_schemas_taskout_52638fbf klass;
+    class backend_app_schemas_taskout_of_78db2867 function;
+    class backend_app_schemas_taskpatchin_1352367d klass;
+    class backend_app_schemas_taskpatchin_fields_dfb4a7ba function;
+    class backend_app_schemas_importout_47e4f7b8 klass;
+    class backend_app_api_state_d9fb7313 module;
+    class backend_app_api_state_persist_b57f3471 function;
+    class frontend_src_lib_api_apierror_53221665 api;
+    class frontend_src_lib_api_apierror_constructor_b02dccd9 function;
+    class backend_app_api_agent_bf1f6477 module;
+    class backend_app_api_tasks_a790a8f6 api;
+    class backend_app_main_4d9a7320 module;
+    class frontend_src_features_history_historypopover_ef337edb ui;
+    class frontend_src_features_import_importsheet_334ccb63 ui;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>AgentRunIn</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>agent.py</code><br><small style="color:var(--muted)">app/api/agent.py</small><br><code>run()</code><br><small style="color:var(--muted)">app/api/agent.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>AgentRunIn node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>AgentStatus</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>AgentStatus node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>ChangeSetOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>_persist()</code><br><small style="color:var(--muted)">app/api/state.py</small><br><code>changed()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>delete_preference()</code><br><small style="color:var(--muted)">app/api/state.py</small><br>+4 more</td>
+  <td><code>ChangeSet</code><br><small style="color:var(--muted)">backend/app/models.py</small><br><code>of()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td>ChangeSetOut node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>ChecklistOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>ChecklistOut node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>ChecklistPatchIn</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>set_checklist_item()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>tasks.py</code><br><small style="color:var(--muted)">app/api/tasks.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>ChecklistPatchIn node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>ImportOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>_persist()</code><br><small style="color:var(--muted)">app/api/state.py</small><br><code>state.py</code><br><small style="color:var(--muted)">app/api/state.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>ImportOut node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>NotionImportIn</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>import_notion()</code><br><small style="color:var(--muted)">app/api/state.py</small><br><code>state.py</code><br><small style="color:var(--muted)">app/api/state.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>NotionImportIn node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>PlanOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>_persist()</code><br><small style="color:var(--muted)">app/api/state.py</small><br><code>state.py</code><br><small style="color:var(--muted)">app/api/state.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>PlanOut node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>PreferenceOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>preferences()</code><br><small style="color:var(--muted)">app/api/state.py</small><br><code>state.py</code><br><small style="color:var(--muted)">app/api/state.py</small></td>
+  <td><code>of()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>Preference</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td>PreferenceOut node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>RescheduleIn</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>reschedule()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>tasks.py</code><br><small style="color:var(--muted)">app/api/tasks.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>RescheduleIn node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>ResourceIn</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>add_resource()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>tasks.py</code><br><small style="color:var(--muted)">app/api/tasks.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>ResourceIn node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>ResourceOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>ResourceOut node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>StateOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>state()</code><br><small style="color:var(--muted)">app/api/state.py</small><br><code>state.py</code><br><small style="color:var(--muted)">app/api/state.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>StateOut node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>TaskChange</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>changed()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>tasks.py</code><br><small style="color:var(--muted)">app/api/tasks.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>TaskChange node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>TaskCreateIn</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>create_task()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>tasks.py</code><br><small style="color:var(--muted)">app/api/tasks.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>TaskCreateIn node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>TaskOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>changed()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>get_task()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>list_tasks()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br>+1 more</td>
+  <td><code>of()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>Task</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td>TaskOut node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>TaskPatchIn</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>tasks.py</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>update_task()</code><br><small style="color:var(--muted)">app/api/tasks.py</small></td>
+  <td><code>fields()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td>TaskPatchIn node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>get_runtime()</code><br><small style="color:var(--muted)">app/api/deps.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small></td>
+  <td>get_runtime() node in app/api/deps.py.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>_persist()</code><br><small style="color:var(--muted)">app/api/state.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>import_file()</code><br><small style="color:var(--muted)">app/api/state.py</small><br><code>import_notion()</code><br><small style="color:var(--muted)">app/api/state.py</small></td>
+  <td><code>ChangeSetOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>ImportOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>of()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br>+3 more</td>
+  <td>_persist() node in app/api/state.py.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>.of()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>PreferenceOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>preferences()</code><br><small style="color:var(--muted)">app/api/state.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>.of() node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>get_settings_dep()</code><br><small style="color:var(--muted)">app/api/deps.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Settings</code><br><small style="color:var(--muted)">backend/app/config.py</small></td>
+  <td>get_settings_dep() node in app/api/deps.py.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>changed()</code><br><small style="color:var(--muted)">app/api/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>add_resource()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>complete()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>create_task()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br>+5 more</td>
+  <td><code>ChangeSetOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>of()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>of()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br>+2 more</td>
+  <td>changed() node in app/api/tasks.py.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>.of()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>changed()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>get_task()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br><code>list_tasks()</code><br><small style="color:var(--muted)">app/api/tasks.py</small><br>+1 more</td>
+  <td>No direct outbound edge</td>
+  <td>.of() node in backend/app/schemas.py.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>get_service()</code><br><small style="color:var(--muted)">app/api/deps.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>TaskService</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td>get_service() node in app/api/deps.py.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>run()</code><br><small style="color:var(--muted)">app/api/agent.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>AgentBusy</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>AgentRunIn</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td>run() node in app/api/agent.py.</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td><code>events()</code><br><small style="color:var(--muted)">app/api/agent.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>sse()</code><br><small style="color:var(--muted)">app/api/agent.py</small></td>
+  <td>events() node in app/api/agent.py.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>sse()</code><br><small style="color:var(--muted)">app/api/agent.py</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td><code>events()</code><br><small style="color:var(--muted)">app/api/agent.py</small></td>
+  <td><code>json</code></td>
+  <td>sse() node in app/api/agent.py.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>thread()</code><br><small style="color:var(--muted)">app/api/agent.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>thread() node in app/api/agent.py.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>get_session()</code><br><small style="color:var(--muted)">app/api/deps.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>get_session() node in app/api/deps.py.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>delete_preference()</code><br><small style="color:var(--muted)">app/api/state.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>ChangeSetOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>of()</code><br><small style="color:var(--muted)">backend/app/schemas.py</small></td>
+  <td>delete_preference() node in app/api/state.py.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>backend/app/schemas.py</code></td><td>24 nodes</td></tr>
+<tr><td><code>src/lib/api.ts</code></td><td>14 nodes</td></tr>
+<tr><td><code>app/api/tasks.py</code></td><td>12 nodes</td></tr>
+<tr><td><code>app/api/state.py</code></td><td>11 nodes</td></tr>
+<tr><td><code>src/app/taskActions.ts</code></td><td>8 nodes</td></tr>
+<tr><td><code>app/api/agent.py</code></td><td>6 nodes</td></tr>
+<tr><td><code>app/api/deps.py</code></td><td>5 nodes</td></tr>
+<tr><td><code>features/import/ImportSheet.tsx</code></td><td>5 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x71, calls x55, references x49, imports x31. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 6. Tests & Fixtures ====== -->
+<h2 id="tests-fixtures">6. Tests &amp; Fixtures</h2>
+<p>Tests &amp; Fixtures groups implementation around backend, test, tests, app, mostly in app/services/tasks.py, backend/tests/test_importers.py, backend/tests/test_api.py. This section covers 186 nodes and 529 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Tests &amp; Fixtures (186 nodes, 529 edges)
+    subgraph tests_fixtures_app_services_tasks_py_36148e04["app/services/tasks.py"]
+        backend_app_services_tasks_recorder_f9584600("Recorder<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_007c464c("tasks.py")
+        backend_app_services_tasks_recorder_init_286b165e("__init__()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_recorder_event_ae247c10("_event()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_recorder_create_0b3ba978("create()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_recorder_update_edae7dd8("update()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_recorder_delete_8148e6db("delete()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_taskservice_a28095fe("TaskService<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_taskservice_init_3e700834("__init__()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_taskservice_change_se_2ebbc36b("change_set()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_taskservice_get_task_a4e9acee("get_task()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_taskservice_list_task_da522794("list_tasks()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_taskservice_list_pref_106e860c("list_preferences()<br/><small>app/services/tasks.py</small>")
+        backend_app_services_tasks_taskservice_history_e2013a78("history()<br/><small>app/services/tasks.py</small>")
+    end
+    subgraph tests_fixtures_backend_tests_test_agent_py_e0427025["backend/tests/test_agent.py"]
+        backend_tests_test_agent_test_finishing_early_tr_db9dbabd("and reports changes()<br/><small>backend/tests/test_agent.py</small>")
+        backend_tests_test_agent_test_resource_and_progr_905c6ed2("and progress tools()<br/><small>backend/tests/test_agent.py</small>")
+    end
+    backend_app_importers_persist_d40cb17a("persist.py")
+    backend_tests_test_importers_4d89046f("test_importers.py")
+    backend_app_services_tasks_recorder_f9584600 -->|method| backend_app_services_tasks_recorder_init_286b165e
+    backend_app_services_tasks_recorder_f9584600 -->|method| backend_app_services_tasks_recorder_event_ae247c10
+    backend_app_services_tasks_recorder_f9584600 -->|method| backend_app_services_tasks_recorder_create_0b3ba978
+    backend_app_services_tasks_recorder_f9584600 -->|method| backend_app_services_tasks_recorder_update_edae7dd8
+    backend_app_services_tasks_recorder_f9584600 -->|method| backend_app_services_tasks_recorder_delete_8148e6db
+    backend_app_services_tasks_taskservice_a28095fe -->|method| backend_app_services_tasks_taskservice_init_3e700834
+    backend_app_services_tasks_taskservice_a28095fe -->|method| backend_app_services_tasks_taskservice_change_se_2ebbc36b
+    backend_app_services_tasks_taskservice_a28095fe -->|method| backend_app_services_tasks_taskservice_get_task_a4e9acee
+    backend_app_services_tasks_taskservice_a28095fe -->|method| backend_app_services_tasks_taskservice_list_task_da522794
+    backend_app_services_tasks_taskservice_a28095fe -->|method| backend_app_services_tasks_taskservice_list_pref_106e860c
+    backend_app_services_tasks_taskservice_a28095fe -->|method| backend_app_services_tasks_taskservice_history_e2013a78
+    backend_app_services_tasks_recorder_create_0b3ba978 -->|calls| backend_app_services_tasks_recorder_event_ae247c10
+    backend_app_services_tasks_recorder_delete_8148e6db -->|calls| backend_app_services_tasks_recorder_delete_8148e6db
+    backend_app_services_tasks_recorder_delete_8148e6db -->|calls| backend_app_services_tasks_recorder_event_ae247c10
+    backend_app_services_tasks_recorder_update_edae7dd8 -->|calls| backend_app_services_tasks_recorder_event_ae247c10
+    backend_app_services_tasks_taskservice_change_se_2ebbc36b -->|calls| backend_app_services_tasks_recorder_f9584600
+    backend_tests_test_agent_test_finishing_early_tr_db9dbabd -->|calls| backend_app_services_tasks_taskservice_a28095fe
+    backend_tests_test_agent_test_resource_and_progr_905c6ed2 -->|calls| backend_app_services_tasks_taskservice_a28095fe
+    backend_app_importers_persist_d40cb17a -->|imports| backend_app_services_tasks_taskservice_a28095fe
+    backend_app_importers_persist_d40cb17a -->|imports| backend_app_services_tasks_007c464c
+    backend_tests_test_importers_4d89046f -->|imports| backend_app_services_tasks_taskservice_a28095fe
+    backend_tests_test_importers_4d89046f -->|imports| backend_app_services_tasks_007c464c
+    backend_tests_test_agent_test_finishing_early_tr_db9dbabd -->|calls| backend_app_services_tasks_taskservice_change_se_2ebbc36b
+    backend_tests_test_agent_test_finishing_early_tr_db9dbabd -->|calls| backend_app_services_tasks_taskservice_get_task_a4e9acee
+    %% Omitted for readability: 168 nodes, 2 edges
+    class backend_app_services_tasks_recorder_f9584600 klass;
+    class backend_app_services_tasks_007c464c module;
+    class backend_app_services_tasks_recorder_init_286b165e function;
+    class backend_app_services_tasks_recorder_event_ae247c10 function;
+    class backend_app_services_tasks_recorder_create_0b3ba978 function;
+    class backend_app_services_tasks_recorder_update_edae7dd8 function;
+    class backend_app_services_tasks_recorder_delete_8148e6db function;
+    class backend_app_services_tasks_taskservice_a28095fe klass;
+    class backend_app_services_tasks_taskservice_init_3e700834 function;
+    class backend_app_services_tasks_taskservice_change_se_2ebbc36b function;
+    class backend_app_services_tasks_taskservice_get_task_a4e9acee function;
+    class backend_app_services_tasks_taskservice_list_task_da522794 function;
+    class backend_app_services_tasks_taskservice_list_pref_106e860c function;
+    class backend_app_services_tasks_taskservice_history_e2013a78 function;
+    class backend_tests_test_agent_test_finishing_early_tr_db9dbabd test;
+    class backend_tests_test_agent_test_resource_and_progr_905c6ed2 test;
+    class backend_app_importers_persist_d40cb17a module;
+    class backend_tests_test_importers_4d89046f test;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>ImportResult</code><br><small style="color:var(--muted)">app/importers/persist.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>__init__.py</code><br><small style="color:var(--muted)">app/importers/__init__.py</small><br><code>persist_draft()</code><br><small style="color:var(--muted)">app/importers/persist.py</small></td>
+  <td><code>ChangeSet</code><br><small style="color:var(--muted)">backend/app/models.py</small><br><code>Plan</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td>ImportResult node in app/importers/persist.py.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Base</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>_from_snapshot()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>env.py</code><br><small style="color:var(--muted)">backend/alembic/env.py</small><br><code>Recorder</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br>+2 more</td>
+  <td>No direct outbound edge</td>
+  <td>Base node in backend/app/models.py.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>ChangeSet</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>change_set()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>ChangeSetOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>ImportResult</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br>+5 more</td>
+  <td>No direct outbound edge</td>
+  <td>ChangeSet node in backend/app/models.py.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>ChecklistItem</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>create_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>persist.py</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br><code>persist_draft()</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br>+3 more</td>
+  <td>No direct outbound edge</td>
+  <td>ChecklistItem node in backend/app/models.py.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>Event</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>_event()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>Recorder</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>tasks.py</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br>+1 more</td>
+  <td>No direct outbound edge</td>
+  <td>Event node in backend/app/models.py.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>Plan</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>ImportResult</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br><code>persist.py</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br><code>persist_draft()</code><br><small style="color:var(--muted)">app/importers/persist.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>Plan node in backend/app/models.py.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>Preference</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>PreferenceOut</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>schemas.py</code><br><small style="color:var(--muted)">backend/app/schemas.py</small><br><code>tasks.py</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br>+1 more</td>
+  <td>No direct outbound edge</td>
+  <td>Preference node in backend/app/models.py.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>Resource</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>add_resource()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>create_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>persist.py</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br>+4 more</td>
+  <td>No direct outbound edge</td>
+  <td>Resource node in backend/app/models.py.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>Task</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>describe_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>dump_plan()</code><br><small style="color:var(--muted)">app/importers/plan_file.py</small><br><code>format_task()</code><br><small style="color:var(--muted)">app/agent/tools.py</small><br>+10 more</td>
+  <td>No direct outbound edge</td>
+  <td>Task node in backend/app/models.py.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>Conflict</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>create_app()</code><br><small style="color:var(--muted)">backend/app/main.py</small><br><code>main.py</code><br><small style="color:var(--muted)">backend/app/main.py</small><br><code>restores previous state()</code><br><small style="color:var(--muted)">backend/tests/test_task_service.py</small><br>+2 more</td>
+  <td>No direct outbound edge</td>
+  <td>Conflict node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>Moved</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>build_tools()</code><br><small style="color:var(--muted)">app/agent/tools.py</small><br><code>replan_day()</code><br><small style="color:var(--muted)">app/agent/tools.py</small><br><code>tagged with run()</code><br><small style="color:var(--muted)">backend/tests/test_task_service.py</small><br>+2 more</td>
+  <td>No direct outbound edge</td>
+  <td>Moved node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>NotFound</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>build_tools()</code><br><small style="color:var(--muted)">app/agent/tools.py</small><br><code>create_app()</code><br><small style="color:var(--muted)">backend/app/main.py</small><br><code>delete_preference()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br>+5 more</td>
+  <td>No direct outbound edge</td>
+  <td>NotFound node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>Recorder</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>change_set()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><code>__init__()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>_event()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>Base</code><br><small style="color:var(--muted)">backend/app/models.py</small><br>+8 more</td>
+  <td>Recorder node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>TaskService</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>_persist()</code><br><small style="color:var(--muted)">app/api/state.py</small><br><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>and export roundtrip()</code><br><small style="color:var(--muted)">backend/tests/test_importers.py</small><br>+36 more</td>
+  <td><code>__init__()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>add_preference()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>add_resource()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br>+26 more</td>
+  <td>TaskService node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>runtime_factory()</code><br><small style="color:var(--muted)">backend/tests/test_agent.py</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>a new runtime()</code><br><small style="color:var(--muted)">backend/tests/test_agent.py</small><br><code>and progress tools()</code><br><small style="color:var(--muted)">backend/tests/test_agent.py</small><br><code>and remember preference()</code><br><small style="color:var(--muted)">backend/tests/test_agent.py</small><br>+4 more</td>
+  <td><code>AgentRuntime</code><br><small style="color:var(--muted)">app/agent/runtime.py</small><br><code>ScriptedChatModel</code><br><small style="color:var(--muted)">backend/tests/fakes.py</small></td>
+  <td>runtime_factory() node in backend/tests/test_agent.py.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>.create()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Recorder</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><code>_event()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>snapshot()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td>.create() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>.apply_moves()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>tagged with run()</code><br><small style="color:var(--muted)">backend/tests/test_task_service.py</small><br><code>TaskService</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><code>change_set()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>get_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td>.apply_moves() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>.delete_preference()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>checklist and preferences()</code><br><small style="color:var(--muted)">backend/tests/test_task_service.py</small><br><code>TaskService</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><code>change_set()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>NotFound</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td>.delete_preference() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>.delete_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>task with children()</code><br><small style="color:var(--muted)">backend/tests/test_task_service.py</small><br><code>TaskService</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><code>change_set()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>describe_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>get_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td>.delete_task() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>.undo()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>checklist and preferences()</code><br><small style="color:var(--muted)">backend/tests/test_task_service.py</small><br><code>restores previous state()</code><br><small style="color:var(--muted)">backend/tests/test_task_service.py</small><br><code>tagged with run()</code><br><small style="color:var(--muted)">backend/tests/test_task_service.py</small><br>+3 more</td>
+  <td><code>_from_snapshot()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>change_set()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>Conflict</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br>+3 more</td>
+  <td>.undo() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>persist_draft()</code><br><small style="color:var(--muted)">app/importers/persist.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>__init__.py</code><br><small style="color:var(--muted)">app/importers/__init__.py</small><br><code>_persist()</code><br><small style="color:var(--muted)">app/api/state.py</small><br><code>and export roundtrip()</code><br><small style="color:var(--muted)">backend/tests/test_importers.py</small><br>+4 more</td>
+  <td><code>_dedupe_ids()</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br><code>change_set()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>ChecklistItem</code><br><small style="color:var(--muted)">backend/app/models.py</small><br>+8 more</td>
+  <td>persist_draft() node in app/importers/persist.py.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>.get_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>add_resource()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>and progress tools()</code><br><small style="color:var(--muted)">backend/tests/test_agent.py</small><br><code>and remember preference()</code><br><small style="color:var(--muted)">backend/tests/test_agent.py</small><br>+13 more</td>
+  <td><code>NotFound</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td>.get_task() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>render_context()</code><br><small style="color:var(--muted)">app/agent/graph.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>load_context()</code><br><small style="color:var(--muted)">app/agent/graph.py</small></td>
+  <td><code>format_task()</code><br><small style="color:var(--muted)">app/agent/tools.py</small><br><code>history()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>list_preferences()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br>+2 more</td>
+  <td>render_context() node in app/agent/graph.py.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>_dedupe_ids()</code><br><small style="color:var(--muted)">app/importers/persist.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>persist_draft()</code><br><small style="color:var(--muted)">app/importers/persist.py</small></td>
+  <td><code>TaskDraft</code><br><small style="color:var(--muted)">app/importers/draft.py</small></td>
+  <td>_dedupe_ids() node in app/importers/persist.py.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>utcnow()</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>complete()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>persist.py</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br><code>persist_draft()</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br>+4 more</td>
+  <td>No direct outbound edge</td>
+  <td>utcnow() node in backend/app/models.py.</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td><code>describe_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>add_resource()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>complete()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>create_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br>+4 more</td>
+  <td><code>Task</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td>describe_task() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>_from_snapshot()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>undo()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><code>Base</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td>_from_snapshot() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>normalize_task_fields()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>create_task()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>persist.py</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br><code>persist_draft()</code><br><small style="color:var(--muted)">app/importers/persist.py</small><br>+1 more</td>
+  <td>No direct outbound edge</td>
+  <td>normalize_task_fields() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>.delete()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>delete()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>Recorder</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><code>_event()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>delete()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>snapshot()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td>.delete() node in app/services/tasks.py.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>._event()</code><br><small style="color:var(--muted)">app/services/tasks.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>create()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>delete()</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br><code>Recorder</code><br><small style="color:var(--muted)">app/services/tasks.py</small><br>+1 more</td>
+  <td><code>Event</code><br><small style="color:var(--muted)">backend/app/models.py</small></td>
+  <td>._event() node in app/services/tasks.py.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>app/services/tasks.py</code></td><td>43 nodes</td></tr>
+<tr><td><code>backend/tests/test_importers.py</code></td><td>15 nodes</td></tr>
+<tr><td><code>backend/tests/test_api.py</code></td><td>13 nodes</td></tr>
+<tr><td><code>backend/app/models.py</code></td><td>11 nodes</td></tr>
+<tr><td><code>backend/tests/test_agent.py</code></td><td>11 nodes</td></tr>
+<tr><td><code>backend/tests/test_task_service.py</code></td><td>11 nodes</td></tr>
+<tr><td><code>app/agent/scheduler.py</code></td><td>10 nodes</td></tr>
+<tr><td><code>backend/tests/test_scheduler.py</code></td><td>10 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x229, contains x100, references x56, imports x51. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 7. Agent chat store & SSE ====== -->
+<h2 id="agent-chat-store-sse">7. Agent chat store &amp; SSE</h2>
+<p>Agent chat store &amp; SSE groups implementation around frontend, chat, features, agentstorets, mostly in features/chat/agentStore.ts, src/lib/sse.ts, features/chat/ChatPanel.tsx. This section covers 19 nodes and 24 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Agent chat store &amp; SSE (19 nodes, 24 edges)
+    subgraph agent_chat_store_sse_features_chat_agentStore_ts_74e2d049["features/chat/agentStore.ts"]
+        frontend_src_features_chat_agentstore_e18233f4("agentStore.ts")
+        frontend_src_features_chat_agentstore_describeto_095f0ffb("describeTool()<br/><small>features/chat/agentStore.ts</small>")
+        frontend_src_features_chat_agentstore_chatitem_b82728e4("ChatItem<br/><small>features/chat/agentStore.ts</small>")
+        frontend_src_features_chat_agentstore_agentstore_3d428179("AgentStore<br/><small>features/chat/agentStore.ts</small>")
+        frontend_src_features_chat_agentstore_change_e89b09d7("Change<br/><small>features/chat/agentStore.ts</small>")
+        frontend_src_features_chat_agentstore_runrequest_acc49b3d("RunRequest<br/><small>features/chat/agentStore.ts</small>")
+        frontend_src_features_chat_agentstore_pending_0228f1f0("pending<br/><small>features/chat/agentStore.ts</small>")
+        frontend_src_features_chat_agentstore_queue_49bb1c0b("queue<br/><small>features/chat/agentStore.ts</small>")
+        frontend_src_features_chat_agentstore_readreact_396f4915("readReact()<br/><small>features/chat/agentStore.ts</small>")
+    end
+    subgraph agent_chat_store_sse_features_chat_ChatPanel_tsx_8ea69352["features/chat/ChatPanel.tsx"]
+        frontend_src_features_chat_chatpanel_703a9557("ChatPanel.tsx")
+        frontend_src_features_chat_chatpanel_item_e7c11f65("Item()<br/><small>features/chat/ChatPanel.tsx</small>")
+        frontend_src_features_chat_chatpanel_eventsummar_2910ac59("eventSummary()<br/><small>features/chat/ChatPanel.tsx</small>")
+        frontend_src_features_chat_chatpanel_suggestions_b4f81ca6("SUGGESTIONS<br/><small>features/chat/ChatPanel.tsx</small>")
+    end
+    subgraph agent_chat_store_sse_src_lib_sse_ts_6020d125["src/lib/sse.ts"]
+        frontend_src_lib_sse_streamsse_6f5cc91b("streamSse()<br/><small>src/lib/sse.ts</small>")
+        frontend_src_lib_sse_parsessechunk_f88900e3("parseSseChunk()<br/><small>src/lib/sse.ts</small>")
+        frontend_src_lib_sse_d72620bf("sse.ts")
+    end
+    frontend_src_features_chat_chat_49afe2bf("features chat chat")
+    frontend_src_lib_api_appstate_c0bfeab6("AppState<br/><small>src/lib/api.ts</small>")
+    frontend_src_features_chat_chatpanel_item_e7c11f65 -->|calls| frontend_src_features_chat_chatpanel_eventsummar_2910ac59
+    frontend_src_features_chat_chatpanel_item_e7c11f65 -->|calls| frontend_src_features_chat_agentstore_describeto_095f0ffb
+    frontend_src_lib_sse_streamsse_6f5cc91b -->|calls| frontend_src_lib_sse_parsessechunk_f88900e3
+    frontend_src_features_chat_agentstore_e18233f4 -->|imports| frontend_src_lib_sse_streamsse_6f5cc91b
+    frontend_src_features_chat_agentstore_e18233f4 -->|imports| frontend_src_lib_sse_d72620bf
+    frontend_src_features_chat_chatpanel_703a9557 -->|imports| frontend_src_lib_api_appstate_c0bfeab6
+    frontend_src_features_chat_chatpanel_703a9557 -->|imports| frontend_src_features_chat_agentstore_chatitem_b82728e4
+    frontend_src_features_chat_chatpanel_703a9557 -->|imports| frontend_src_features_chat_agentstore_describeto_095f0ffb
+    frontend_src_features_chat_chatpanel_703a9557 -->|imports| frontend_src_features_chat_agentstore_e18233f4
+    frontend_src_features_chat_chatpanel_703a9557 -->|imports| frontend_src_features_chat_chat_49afe2bf
+    %% Omitted for readability: 1 nodes, 0 edges
+    class frontend_src_features_chat_agentstore_e18233f4 ui;
+    class frontend_src_features_chat_agentstore_describeto_095f0ffb function;
+    class frontend_src_features_chat_agentstore_chatitem_b82728e4 klass;
+    class frontend_src_features_chat_agentstore_agentstore_3d428179 ui;
+    class frontend_src_features_chat_agentstore_change_e89b09d7 klass;
+    class frontend_src_features_chat_agentstore_runrequest_acc49b3d klass;
+    class frontend_src_features_chat_agentstore_pending_0228f1f0 function;
+    class frontend_src_features_chat_agentstore_queue_49bb1c0b function;
+    class frontend_src_features_chat_agentstore_readreact_396f4915 function;
+    class frontend_src_features_chat_chatpanel_703a9557 ui;
+    class frontend_src_features_chat_chatpanel_item_e7c11f65 ui;
+    class frontend_src_features_chat_chatpanel_eventsummar_2910ac59 ui;
+    class frontend_src_features_chat_chatpanel_suggestions_b4f81ca6 ui;
+    class frontend_src_lib_sse_streamsse_6f5cc91b async;
+    class frontend_src_lib_sse_parsessechunk_f88900e3 async;
+    class frontend_src_lib_sse_d72620bf async;
+    class frontend_src_features_chat_chat_49afe2bf function;
+    class frontend_src_lib_api_appstate_c0bfeab6 klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>AgentStore</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>AgentStore node in features/chat/agentStore.ts.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Change</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Change node in features/chat/agentStore.ts.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>ChatItem</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>ChatPanel.tsx</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>RunRequest</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>RunRequest node in features/chat/agentStore.ts.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>AppState</code><br><small style="color:var(--muted)">src/lib/api.ts</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>ChatPanel.tsx</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>AppState node in src/lib/api.ts.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>SseEvent</code><br><small style="color:var(--muted)">src/lib/sse.ts</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>SseEvent node in src/lib/sse.ts.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>describeTool()</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>ChatPanel.tsx</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small><br><code>Item()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>describeTool() node in features/chat/agentStore.ts.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>readReact()</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>useAgent</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td>No direct outbound edge</td>
+  <td>readReact() node in features/chat/agentStore.ts.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>eventSummary()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>Item()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>eventSummary() node in features/chat/ChatPanel.tsx.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>Item()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>ChatPanel()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td><code>describeTool()</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small><br><code>eventSummary()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small><br><code>undo()</code><br><small style="color:var(--muted)">src/app/taskActions.ts</small></td>
+  <td>Item() node in features/chat/ChatPanel.tsx.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>parseSseChunk()</code><br><small style="color:var(--muted)">src/lib/sse.ts</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td><code>lib.test.ts</code><br><small style="color:var(--muted)">src/lib/lib.test.ts</small><br><code>streamSse()</code><br><small style="color:var(--muted)">src/lib/sse.ts</small></td>
+  <td>No direct outbound edge</td>
+  <td>parseSseChunk() node in src/lib/sse.ts.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>streamSse()</code><br><small style="color:var(--muted)">src/lib/sse.ts</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td><code>agentStore.ts</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small><br><code>useAgent</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><code>parseSseChunk()</code><br><small style="color:var(--muted)">src/lib/sse.ts</small></td>
+  <td>streamSse() node in src/lib/sse.ts.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>agentStore.ts</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>ChatPanel.tsx</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small><br><code>taskActions.ts</code><br><small style="color:var(--muted)">src/app/taskActions.ts</small><br>+1 more</td>
+  <td><code>api</code><br><small style="color:var(--muted)">src/lib/api.ts</small><br><code>api.ts</code><br><small style="color:var(--muted)">src/lib/api.ts</small><br><code>dates.ts</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br>+6 more</td>
+  <td>Module file in features/chat/agentStore.ts.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>pending</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>pending node in features/chat/agentStore.ts.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>queue</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>queue node in features/chat/agentStore.ts.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>ChatPanel.tsx</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><code>agentStore.ts</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small><br><code>api.ts</code><br><small style="color:var(--muted)">src/lib/api.ts</small><br><code>AppState</code><br><small style="color:var(--muted)">src/lib/api.ts</small><br>+9 more</td>
+  <td>Module file in features/chat/ChatPanel.tsx.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>SUGGESTIONS</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>SUGGESTIONS node in features/chat/ChatPanel.tsx.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>sse.ts</code><br><small style="color:var(--muted)">src/lib/sse.ts</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td><code>agentStore.ts</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small><br><code>lib.test.ts</code><br><small style="color:var(--muted)">src/lib/lib.test.ts</small></td>
+  <td>No direct outbound edge</td>
+  <td>Module file in src/lib/sse.ts.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>frontend_src_features_chat_chat</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>ChatPanel.tsx</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>features/chat/agentStore.ts</code></td><td>9 nodes</td></tr>
+<tr><td><code>features/chat/ChatPanel.tsx</code></td><td>4 nodes</td></tr>
+<tr><td><code>src/lib/sse.ts</code></td><td>4 nodes</td></tr>
+<tr><td><code>src/lib/api.ts</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x14, imports x4, calls x3, imports x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 8. App shell & data hooks ====== -->
+<h2 id="app-shell-data-hooks">8. App shell &amp; data hooks</h2>
+<p>App shell &amp; data hooks groups implementation around frontend, app, queriests, apptsx, mostly in src/app/queries.ts, src/app/App.tsx, src/lib/dates.ts. This section covers 16 nodes and 36 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: App shell &amp; data hooks (16 nodes, 36 edges)
+    subgraph app_shell_data_hooks_src_app_queries_ts_50fd524a["src/app/queries.ts"]
+        frontend_src_app_queries_useweektasks_8ad1b1ca("useWeekTasks()<br/><small>src/app/queries.ts</small>")
+        frontend_src_app_queries_usemissed_d0ea4bcc("useMissed()<br/><small>src/app/queries.ts</small>")
+        frontend_src_app_queries_useunscheduled_66ee907c("useUnscheduled()<br/><small>src/app/queries.ts</small>")
+        frontend_src_app_queries_useappstate_b3197598("useAppState()<br/><small>src/app/queries.ts</small>")
+        frontend_src_app_queries_11e95e1c("queries.ts")
+    end
+    subgraph app_shell_data_hooks_src_app_App_tsx_668d5e71["src/app/App.tsx"]
+        frontend_src_app_app_9781f459("App.tsx")
+        frontend_src_app_app_app_6ac59203("App()<br/><small>src/app/App.tsx</small>")
+        frontend_src_app_app_usedayreview_415987db("useDayReview()<br/><small>src/app/App.tsx</small>")
+    end
+    subgraph app_shell_data_hooks_src_lib_dates_ts_ad733901["src/lib/dates.ts"]
+        frontend_src_lib_dates_weekdaylong_b406d9b1("weekdayLong()<br/><small>src/lib/dates.ts</small>")
+        frontend_src_lib_dates_daymonth_b5953d1e("dayMonth()<br/><small>src/lib/dates.ts</small>")
+        frontend_src_lib_dates_parsedate_8c1e8b39("parseDate()<br/><small>src/lib/dates.ts</small>")
+    end
+    subgraph app_shell_data_hooks_features_timeline_WeekStrip_162ec4f0["features/timeline/WeekStrip.tsx"]
+        frontend_src_features_timeline_weekstrip_ce922c2a("WeekStrip.tsx")
+        frontend_src_features_timeline_weekstrip_weekstr_ef34cf23("WeekStrip()<br/><small>features/timeline/WeekStrip.tsx</small>")
+    end
+    frontend_src_features_chat_chatpanel_chatpanel_c25bd0c1("ChatPanel()<br/><small>features/chat/ChatPanel.tsx</small>")
+    frontend_src_features_chat_agentstore_useagent_ef4869ed("useAgent<br/><small>features/chat/agentStore.ts</small>")
+    frontend_src_lib_api_task_cbd8039c("Task<br/><small>src/lib/api.ts</small>")
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_features_chat_chatpanel_chatpanel_c25bd0c1
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_app_queries_useweektasks_8ad1b1ca
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_app_queries_usemissed_d0ea4bcc
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_app_queries_useunscheduled_66ee907c
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_app_queries_useappstate_b3197598
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_features_chat_agentstore_useagent_ef4869ed
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_app_app_usedayreview_415987db
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_features_timeline_weekstrip_weekstr_ef34cf23
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_lib_dates_weekdaylong_b406d9b1
+    frontend_src_app_app_app_6ac59203 -->|calls| frontend_src_lib_dates_daymonth_b5953d1e
+    frontend_src_app_app_usedayreview_415987db -->|calls| frontend_src_features_chat_agentstore_useagent_ef4869ed
+    frontend_src_features_chat_chatpanel_chatpanel_c25bd0c1 -->|calls| frontend_src_features_chat_agentstore_useagent_ef4869ed
+    frontend_src_features_timeline_weekstrip_weekstr_ef34cf23 -->|calls| frontend_src_lib_dates_parsedate_8c1e8b39
+    frontend_src_lib_dates_daymonth_b5953d1e -->|calls| frontend_src_lib_dates_parsedate_8c1e8b39
+    frontend_src_lib_dates_weekdaylong_b406d9b1 -->|calls| frontend_src_lib_dates_parsedate_8c1e8b39
+    frontend_src_app_app_9781f459 -->|imports| frontend_src_features_timeline_weekstrip_weekstr_ef34cf23
+    frontend_src_app_app_9781f459 -->|imports| frontend_src_lib_api_task_cbd8039c
+    frontend_src_app_app_9781f459 -->|imports| frontend_src_lib_dates_daymonth_b5953d1e
+    frontend_src_app_app_9781f459 -->|imports| frontend_src_lib_dates_weekdaylong_b406d9b1
+    frontend_src_app_app_9781f459 -->|imports| frontend_src_app_queries_useappstate_b3197598
+    frontend_src_app_app_9781f459 -->|imports| frontend_src_app_queries_usemissed_d0ea4bcc
+    frontend_src_app_app_9781f459 -->|imports| frontend_src_app_queries_useunscheduled_66ee907c
+    frontend_src_app_app_9781f459 -->|imports| frontend_src_app_queries_useweektasks_8ad1b1ca
+    frontend_src_app_app_9781f459 -->|imports| frontend_src_features_chat_chatpanel_chatpanel_c25bd0c1
+    %% Omitted for readability: 0 nodes, 5 edges
+    class frontend_src_app_queries_useweektasks_8ad1b1ca ui;
+    class frontend_src_app_queries_usemissed_d0ea4bcc async;
+    class frontend_src_app_queries_useunscheduled_66ee907c ui;
+    class frontend_src_app_queries_useappstate_b3197598 ui;
+    class frontend_src_app_queries_11e95e1c module;
+    class frontend_src_app_app_9781f459 ui;
+    class frontend_src_app_app_app_6ac59203 ui;
+    class frontend_src_app_app_usedayreview_415987db ui;
+    class frontend_src_lib_dates_weekdaylong_b406d9b1 function;
+    class frontend_src_lib_dates_daymonth_b5953d1e function;
+    class frontend_src_lib_dates_parsedate_8c1e8b39 function;
+    class frontend_src_features_timeline_weekstrip_ce922c2a ui;
+    class frontend_src_features_timeline_weekstrip_weekstr_ef34cf23 ui;
+    class frontend_src_features_chat_chatpanel_chatpanel_c25bd0c1 ui;
+    class frontend_src_features_chat_agentstore_useagent_ef4869ed ui;
+    class frontend_src_lib_api_task_cbd8039c klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>Task</code><br><small style="color:var(--muted)">src/lib/api.ts</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>Checklist.tsx</code><br><small style="color:var(--muted)">features/checklist/Checklist.tsx</small><br><code>DayTimeline.tsx</code><br><small style="color:var(--muted)">features/timeline/DayTimeline.tsx</small><br>+3 more</td>
+  <td>No direct outbound edge</td>
+  <td>Task node in src/lib/api.ts.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>main.tsx</code><br><small style="color:var(--muted)">frontend/src/main.tsx</small></td>
+  <td><code>ChatPanel()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small><br><code>Checklist()</code><br><small style="color:var(--muted)">features/checklist/Checklist.tsx</small><br><code>dayMonth()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br>+16 more</td>
+  <td>App() node in src/app/App.tsx.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>useDayReview()</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><code>useAgent</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td>useDayReview() node in src/app/App.tsx.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>useAppState()</code><br><small style="color:var(--muted)">src/app/queries.ts</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>useAppState() node in src/app/queries.ts.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>useMissed()</code><br><small style="color:var(--muted)">src/app/queries.ts</small></td>
+  <td><span class="tag tag-async">Async</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>useMissed() node in src/app/queries.ts.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>useUnscheduled()</code><br><small style="color:var(--muted)">src/app/queries.ts</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>useUnscheduled() node in src/app/queries.ts.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>useWeekTasks()</code><br><small style="color:var(--muted)">src/app/queries.ts</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><code>addDays()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small></td>
+  <td>useWeekTasks() node in src/app/queries.ts.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>ChatPanel()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><code>Item()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small><br><code>useAgent</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>WeekStrip()</code><br><small style="color:var(--muted)">features/timeline/WeekStrip.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><code>addDays()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br><code>parseDate()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small></td>
+  <td>WeekStrip() node in features/timeline/WeekStrip.tsx.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>dayMonth()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><code>parseDate()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small></td>
+  <td>dayMonth() node in src/lib/dates.ts.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>parseDate()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>addDays()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br><code>dayMonth()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br><code>shortDay()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br>+4 more</td>
+  <td>No direct outbound edge</td>
+  <td>parseDate() node in src/lib/dates.ts.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>weekdayLong()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><code>parseDate()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small></td>
+  <td>weekdayLong() node in src/lib/dates.ts.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>main.tsx</code><br><small style="color:var(--muted)">frontend/src/main.tsx</small></td>
+  <td><code>agentStore.ts</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small><br><code>api.ts</code><br><small style="color:var(--muted)">src/lib/api.ts</small><br><code>ChatPanel()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small><br>+30 more</td>
+  <td>Module file in src/app/App.tsx.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>queries.ts</code><br><small style="color:var(--muted)">src/app/queries.ts</small></td>
+  <td><span class="tag tag-class">Module</span></td>
+  <td><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>HistoryPopover.tsx</code><br><small style="color:var(--muted)">features/history/HistoryPopover.tsx</small><br><code>TaskSheet.tsx</code><br><small style="color:var(--muted)">features/checklist/TaskSheet.tsx</small></td>
+  <td><code>@tanstack/react-query</code><br><small style="color:var(--muted)">frontend/package.json</small><br><code>addDays()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br><code>api</code><br><small style="color:var(--muted)">src/lib/api.ts</small><br>+2 more</td>
+  <td>Module file in src/app/queries.ts.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>useAgent</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App()</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small><br><code>ChatPanel()</code><br><small style="color:var(--muted)">features/chat/ChatPanel.tsx</small><br>+5 more</td>
+  <td><code>localNowIso()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br><code>readReact()</code><br><small style="color:var(--muted)">features/chat/agentStore.ts</small><br><code>refreshPlan()</code><br><small style="color:var(--muted)">src/app/queryClient.ts</small><br>+1 more</td>
+  <td>useAgent node in features/chat/agentStore.ts.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>WeekStrip.tsx</code><br><small style="color:var(--muted)">features/timeline/WeekStrip.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>App.tsx</code><br><small style="color:var(--muted)">src/app/App.tsx</small></td>
+  <td><code>addDays()</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br><code>api.ts</code><br><small style="color:var(--muted)">src/lib/api.ts</small><br><code>dates.ts</code><br><small style="color:var(--muted)">src/lib/dates.ts</small><br>+4 more</td>
+  <td>Module file in features/timeline/WeekStrip.tsx.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>src/app/queries.ts</code></td><td>5 nodes</td></tr>
+<tr><td><code>src/app/App.tsx</code></td><td>3 nodes</td></tr>
+<tr><td><code>src/lib/dates.ts</code></td><td>3 nodes</td></tr>
+<tr><td><code>features/timeline/WeekStrip.tsx</code></td><td>2 nodes</td></tr>
+<tr><td><code>features/chat/ChatPanel.tsx</code></td><td>1 nodes</td></tr>
+<tr><td><code>features/chat/agentStore.ts</code></td><td>1 nodes</td></tr>
+<tr><td><code>src/lib/api.ts</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x15, imports x12, contains x7, imports x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 9. Fake Ollama demo server ====== -->
+<h2 id="fake-ollama-demo-server">9. Fake Ollama demo server</h2>
+<p>Fake Ollama demo server groups implementation around fake, ollamapy, scripts, end, mostly in scripts/fake_ollama.py. This section covers 11 nodes and 13 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Fake Ollama demo server (11 nodes, 13 edges)
+    subgraph fake_ollama_demo_server_scripts_fake_ollama_py_e8890de3["scripts/fake_ollama.py"]
+        scripts_fake_ollama_handler_4862838d("Handler<br/><small>scripts/fake_ollama.py</small>")
+        scripts_fake_ollama_a79863c6("fake_ollama.py")
+        scripts_fake_ollama_handler_do_post_881efd5f("do_POST()<br/><small>scripts/fake_ollama.py</small>")
+        scripts_fake_ollama_handler_do_get_1f5138f4("do_GET()<br/><small>scripts/fake_ollama.py</small>")
+        scripts_fake_ollama_handler_log_message_b0edfb9d("log_message()<br/><small>scripts/fake_ollama.py</small>")
+        scripts_fake_ollama_handler_json_0ea05730("_json()<br/><small>scripts/fake_ollama.py</small>")
+        scripts_fake_ollama_decide_53626e19("decide()<br/><small>scripts/fake_ollama.py</small>")
+        scripts_fake_ollama_rationale_1_b8a77cd0("A scripted stand-in for Ollama's /api/c...<br/><small>scripts/fake_ollama.py</small>")
+    end
+    subgraph fake_ollama_demo_server_External_generated_4592442c["External / generated"]
+        sys_b4c56ee8("sys")
+        http_server_fe6024d5("http_server")
+        basehttprequesthandler_86f2c841("BaseHTTPRequestHandler")
+    end
+    scripts_fake_ollama_handler_4862838d -->|method| scripts_fake_ollama_handler_log_message_b0edfb9d
+    scripts_fake_ollama_handler_4862838d -->|method| scripts_fake_ollama_handler_json_0ea05730
+    scripts_fake_ollama_handler_4862838d -->|method| scripts_fake_ollama_handler_do_get_1f5138f4
+    scripts_fake_ollama_handler_4862838d -->|method| scripts_fake_ollama_handler_do_post_881efd5f
+    scripts_fake_ollama_handler_do_get_1f5138f4 -->|calls| scripts_fake_ollama_handler_json_0ea05730
+    scripts_fake_ollama_handler_do_post_881efd5f -->|calls| scripts_fake_ollama_handler_json_0ea05730
+    scripts_fake_ollama_handler_do_post_881efd5f -->|calls| scripts_fake_ollama_decide_53626e19
+    scripts_fake_ollama_a79863c6 -->|imports| sys_b4c56ee8
+    scripts_fake_ollama_a79863c6 -->|imports| http_server_fe6024d5
+    class scripts_fake_ollama_handler_4862838d klass;
+    class scripts_fake_ollama_a79863c6 module;
+    class scripts_fake_ollama_handler_do_post_881efd5f function;
+    class scripts_fake_ollama_handler_do_get_1f5138f4 function;
+    class scripts_fake_ollama_handler_log_message_b0edfb9d function;
+    class scripts_fake_ollama_handler_json_0ea05730 function;
+    class scripts_fake_ollama_decide_53626e19 function;
+    class scripts_fake_ollama_rationale_1_b8a77cd0 concept;
+    class sys_b4c56ee8 function;
+    class http_server_fe6024d5 function;
+    class basehttprequesthandler_86f2c841 klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>Handler</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>_json()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small><br><code>do_GET()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small><br><code>do_POST()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small><br>+1 more</td>
+  <td>Handler node in scripts/fake_ollama.py.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>decide()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>do_POST()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><code>re</code></td>
+  <td>decide() node in scripts/fake_ollama.py.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>.do_GET()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Handler</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><code>_json()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td>.do_GET() node in scripts/fake_ollama.py.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>.do_POST()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Handler</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><code>_json()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small><br><code>decide()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td>.do_POST() node in scripts/fake_ollama.py.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>._json()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>do_GET()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small><br><code>do_POST()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small><br><code>Handler</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>._json() node in scripts/fake_ollama.py.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>.log_message()</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Handler</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>.log_message() node in scripts/fake_ollama.py.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>BaseHTTPRequestHandler</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>BaseHTTPRequestHandler node in project.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>fake_ollama.py</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><span class="tag tag-class">Module</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>datetime</code><br><code>http_server</code><br><code>json</code><br>+2 more</td>
+  <td>Module file in scripts/fake_ollama.py.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>A scripted stand-in for Ollama&#x27;s /api/chat, for demos and end-to-end tests…</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Design note for A scripted stand-in for Ollama&#x27;s /api/chat, for demos and end-to-end tests….</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>http_server</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>fake_ollama.py</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>http_server node in project.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>sys</code><br><small style="color:var(--muted)"></small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>fake_ollama.py</code><br><small style="color:var(--muted)">scripts/fake_ollama.py</small></td>
+  <td>No direct outbound edge</td>
+  <td>sys node in project.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>scripts/fake_ollama.py</code></td><td>8 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: method x4, calls x3, contains x2, inherits x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 10. app package ====== -->
+<h2 id="app-package">10. app package</h2>
+<p>app package groups implementation around app, backend, mostly in backend/app/__init__.py. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: app package (1 nodes, 0 edges)
+    backend_app_init_f4bd9b21("__init__.py")
+    class backend_app_init_f4bd9b21 module;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>app/__init__.py</code><br><small style="color:var(--muted)">backend/app/__init__.py</small></td>
+  <td><span class="tag tag-class">Module</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Module file in backend/app/__init__.py.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>backend/app/__init__.py</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 11. services package ====== -->
+<h2 id="services-package">11. services package</h2>
+<p>services package groups implementation around services, backend, app, mostly in app/services/__init__.py. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: services package (1 nodes, 0 edges)
+    backend_app_services_init_3d7238ef("__init__.py")
+    class backend_app_services_init_3d7238ef module;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>services/__init__.py</code><br><small style="color:var(--muted)">app/services/__init__.py</small></td>
+  <td><span class="tag tag-class">Module</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Module file in app/services/__init__.py.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>app/services/__init__.py</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 12. backend project metadata ====== -->
+<h2 id="backend-project-metadata">12. backend project metadata</h2>
+<p>backend project metadata groups implementation around backend, planly, pyprojecttoml, mostly in backend/pyproject.toml. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: backend project metadata (1 nodes, 0 edges)
+    pkg_planly_backend_b60fc437("planly-backend<br/><small>backend/pyproject.toml</small>")
+    class pkg_planly_backend_b60fc437 module;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>planly-backend</code><br><small style="color:var(--muted)">backend/pyproject.toml</small></td>
+  <td><span class="tag tag-class">Module</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>planly-backend node in backend/pyproject.toml.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>backend/pyproject.toml</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<h2 id="stats">Project Statistics</h2>
+
+<div class="grid">
+  <div class="card">
+    <h4>Graph</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><td>Nodes</td><td>707</td></tr>
+      <tr><td>Edges</td><td>1901</td></tr>
+      <tr><td>Hyperedges</td><td>0</td></tr>
+      <tr><td>Communities</td><td>30</td></tr>
+      <tr><td>Documented Sections</td><td>11</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Edge Confidence</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><td>EXTRACTED</td><td>1725</td></tr>
+      <tr><td>INFERRED</td><td>176</td></tr>
+      <tr><td>AMBIGUOUS</td><td>0</td></tr>
+    </table>
+  </div>
+</div>
+
+<div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
+  <p>gout2 — Architecture Documentation</p>
+  <p>Generated: 2026-10-30 09:32 UTC · graphify callflow-html</p>
+</div>
+
+</div><!-- .container -->
+
+<script>
+(function () {
+  const mermaidConfig = {
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    flowchart: { htmlLabels: true, useMaxWidth: true },
+    themeVariables: {
+      primaryColor: '#1e293b',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#38bdf8',
+      secondaryColor: '#0f172a',
+      tertiaryColor: '#334155',
+      lineColor: '#64748b',
+      textColor: '#e2e8f0',
+    }
+  };
+
+  mermaid.initialize(mermaidConfig);
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function enhanceMermaidDiagrams() {
+    document.querySelectorAll('.mermaid').forEach((container) => {
+      if (container.dataset.zoomReady === 'true') return;
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+
+      container.dataset.zoomReady = 'true';
+      container.classList.add('is-enhanced');
+
+      const viewport = document.createElement('div');
+      viewport.className = 'mermaid-viewport';
+      svg.parentNode.insertBefore(viewport, svg);
+      viewport.appendChild(svg);
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'mermaid-toolbar';
+      toolbar.innerHTML = [
+        '<button type="button" data-action="zoom-out" title="Zoom out">-</button>',
+        '<span class="zoom-level" data-role="level">100%</span>',
+        '<button type="button" data-action="zoom-in" title="Zoom in">+</button>',
+        '<button type="button" data-action="fit" title="Fit width">Fit</button>',
+        '<button type="button" data-action="reset" title="Reset view">Reset</button>'
+      ].join('');
+      container.insertBefore(toolbar, viewport);
+
+      const state = { scale: 1, x: 0, y: 0, dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 };
+      const level = toolbar.querySelector('[data-role="level"]');
+
+      function applyTransform() {
+        svg.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.scale})`;
+        level.textContent = `${Math.round(state.scale * 100)}%`;
+      }
+
+      function zoomBy(delta) {
+        state.scale = clamp(state.scale + delta, 0.25, 3);
+        applyTransform();
+      }
+
+      function reset() {
+        state.scale = 1;
+        state.x = 0;
+        state.y = 0;
+        applyTransform();
+      }
+
+      function fitWidth() {
+        const rawWidth = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width
+          ? svg.viewBox.baseVal.width
+          : svg.getBoundingClientRect().width / state.scale;
+        if (!rawWidth) {
+          reset();
+          return;
+        }
+        state.scale = clamp((viewport.clientWidth - 48) / rawWidth, 0.25, 1.4);
+        state.x = 0;
+        state.y = 0;
+        applyTransform();
+      }
+
+      toolbar.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        const action = button.dataset.action;
+        if (action === 'zoom-in') zoomBy(0.15);
+        if (action === 'zoom-out') zoomBy(-0.15);
+        if (action === 'fit') fitWidth();
+        if (action === 'reset') reset();
+      });
+
+      viewport.addEventListener('wheel', (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        zoomBy(event.deltaY < 0 ? 0.1 : -0.1);
+      }, { passive: false });
+
+      viewport.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        state.dragging = true;
+        state.startX = event.clientX;
+        state.startY = event.clientY;
+        state.originX = state.x;
+        state.originY = state.y;
+        viewport.classList.add('is-dragging');
+        viewport.setPointerCapture(event.pointerId);
+      });
+
+      viewport.addEventListener('pointermove', (event) => {
+        if (!state.dragging) return;
+        state.x = state.originX + event.clientX - state.startX;
+        state.y = state.originY + event.clientY - state.startY;
+        applyTransform();
+      });
+
+      function endDrag(event) {
+        if (!state.dragging) return;
+        state.dragging = false;
+        viewport.classList.remove('is-dragging');
+        if (viewport.hasPointerCapture(event.pointerId)) {
+          viewport.releasePointerCapture(event.pointerId);
+        }
+      }
+
+      viewport.addEventListener('pointerup', endDrag);
+      viewport.addEventListener('pointercancel', endDrag);
+      applyTransform();
+    });
+  }
+
+  function renderMermaid() {
+    const result = mermaid.run
+      ? mermaid.run({ querySelector: '.mermaid' })
+      : Promise.resolve();
+    Promise.resolve(result)
+      .then(enhanceMermaidDiagrams)
+      .catch((error) => {
+        console.error('Mermaid render failed:', error);
+        enhanceMermaidDiagrams();
+      });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderMermaid);
+  } else {
+    renderMermaid();
+  }
+})();
+</script>
+
+</body>
+</html>
