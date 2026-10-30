@@ -214,7 +214,7 @@ Each FR is verified by the tests listed. Paths are relative to `backend/tests/` 
 | Requirement | Implemented in | Verified by |
 |---|---|---|
 | FR-1.1–1.4 | `app/importers/` | `test_importers.py`, `test_api.py::test_upload_*` |
-| FR-1.5 | `app/importers/notion_api.py` | `test_importers.py::test_notion_api_*` (HTTP mocked with respx) |
+| FR-1.5 | `app/importers/notion.py` | `test_importers.py::test_notion_api_*` (HTTP mocked with respx) |
 | FR-1.6–1.7 | `app/importers/persist.py` | `test_importers.py::test_reimport_*` |
 | FR-1.8 | `examples/AGENT_PROMPT.md` | Manual: prompt output validates against schema |
 | FR-2.x | `frontend/src/features/timeline/` | `frontend/e2e/smoke.spec.ts` |

@@ -6,8 +6,8 @@ Planly imports four kinds of file. The **Planly v1** format (JSON or YAML) is th
 |---|---|---|
 | Planly v1 JSON / YAML | `.json`, `.yaml`, `.yml` | `backend/app/importers/plan_file.py` |
 | Markdown (including Notion page exports) | `.md` | `backend/app/importers/markdown.py` |
-| Notion database CSV export | `.csv` | `backend/app/importers/notion_csv.py` |
-| Notion database (live) | `POST /api/imports/notion` | `backend/app/importers/notion_api.py` |
+| Notion database CSV export | `.csv` | `backend/app/importers/notion.py` |
+| Notion database (live) | `POST /api/imports/notion` | `backend/app/importers/notion.py` |
 
 ## Planly v1 (JSON / YAML)
 
