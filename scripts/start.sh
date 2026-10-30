@@ -56,6 +56,14 @@ if [ ! -f node_modules/.package-lock.json ] || [ package-lock.json -nt node_modu
 fi
 
 # ---------- PostgreSQL ----------
+# Homebrew's versioned PostgreSQL formulas are keg-only, so their tools aren't on PATH
+if ! have pg_isready && have brew; then
+  for version in 18 17 16 15; do
+    if [ -x "$(brew --prefix)/opt/postgresql@$version/bin/pg_isready" ]; then
+      PATH="$(brew --prefix)/opt/postgresql@$version/bin:$PATH"; break
+    fi
+  done
+fi
 DB_URL="${DATABASE_URL:-$(env_value DATABASE_URL)}"
 if [ -z "$DB_URL" ]; then
   if have pg_isready && pg_isready -h localhost -q; then
@@ -92,8 +100,8 @@ Ubuntu: sudo apt install postgresql) or start Docker, then run this again."
 fi
 
 # ---------- Ollama on this machine ----------
-PIDS=()
-cleanup() { [ ${#PIDS[@]} -eq 0 ] || kill "${PIDS[@]}" 2>/dev/null || true; }
+PIDS=""  # a string, not an array: macOS ships bash 3.2, where empty arrays trip `set -u`
+cleanup() { [ -z "$PIDS" ] || kill $PIDS 2>/dev/null || true; }
 trap cleanup EXIT
 trap 'exit 130' INT TERM
 
@@ -102,7 +110,7 @@ if ! ollama_up; then
   have ollama || die "Ollama runs the agent's model on your own hardware. Install it from https://ollama.com/download, then run this again."
   say "Starting Ollama"
   ollama serve >/dev/null 2>&1 &
-  PIDS+=($!)
+  PIDS="$PIDS $!"
   for _ in $(seq 1 30); do ollama_up && break; sleep 1; done
   ollama_up || die "Ollama didn't start. Try running 'ollama serve' yourself to see why."
 fi
@@ -124,13 +132,13 @@ if ! migration=$(.venv/bin/alembic upgrade head 2>&1); then
 fi
 
 .venv/bin/uvicorn app.main:app --port "$API_PORT" --log-level warning &
-PIDS+=($!)
+PIDS="$PIDS $!"
 for _ in $(seq 1 30); do curl -sf -m 2 "http://localhost:$API_PORT/api/health" >/dev/null && break; sleep 1; done
 curl -sf -m 2 "http://localhost:$API_PORT/api/health" >/dev/null || die "The API didn't start (see the errors above)."
 
 cd "$ROOT/frontend"
 PLANLY_API="http://localhost:$API_PORT" node node_modules/vite/bin/vite.js --port "$WEB_PORT" --strictPort --logLevel warn &
-PIDS+=($!)
+PIDS="$PIDS $!"
 for _ in $(seq 1 30); do curl -sf -m 2 "http://localhost:$WEB_PORT/" >/dev/null && break; sleep 1; done
 
 URL="http://localhost:$WEB_PORT"
