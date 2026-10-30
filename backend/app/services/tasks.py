@@ -257,6 +257,18 @@ class TaskService:
     async def last_change_at(self) -> datetime | None:
         return (await self.session.execute(select(func.max(ChangeSet.created_at)))).scalar()
 
+    async def counts(self, today: date) -> dict[str, int]:
+        row = (
+            await self.session.execute(
+                select(
+                    func.count(Task.id),
+                    func.count(Task.id).filter(Task.status == "done"),
+                    func.count(Task.id).filter(and_(Task.status == "todo", Task.date < today)),
+                )
+            )
+        ).one()
+        return {"tasks": row[0], "done": row[1], "missed": row[2]}
+
     # ---------- task mutations ----------
 
     async def create_task(

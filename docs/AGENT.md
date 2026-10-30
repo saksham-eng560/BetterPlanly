@@ -104,6 +104,7 @@ Trigger messages are `HumanMessage(name="planly")`. The UI renders them as small
 
 | SSE event | Data |
 |---|---|
+| `message` | `{"role": "user" \| "event", "content": "..."}` — the run's first message, echoed so the UI can show trigger chips |
 | `token` | `{"text": "..."}` — model text from the `agent` node |
 | `tool_call` | `{"name": "...", "args": {...}}` |
 | `tool_result` | `{"name": "...", "content": "..."}` (truncated) |

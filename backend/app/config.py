@@ -17,7 +17,6 @@ class Settings(BaseSettings):
     web_search_enabled: bool = False
     day_start: time = time(8, 0)
     day_end: time = time(22, 0)
-    cors_origins: list[str] = ["http://localhost:5173"]
     schema_dir: Path = REPO_ROOT / "schemas"
 
     @property
