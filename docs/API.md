@@ -65,7 +65,7 @@ Parse and validation errors return 422 `{"detail": "…", "errors": ["tasks[3].d
 
 | Method & path | Notes |
 |---|---|
-| `GET /state` | `{"tasks": 42, "done": 10, "missed": 2, "last_change_at": "…", "agent": {"model": "qwen2.5:7b", "reachable": true}, "notion_configured": false, "web_search_enabled": false}` |
+| `GET /state` | `{"tasks": 42, "done": 10, "missed": 2, "last_change_at": "…", "agent": {"model": "qwen2.5:14b", "reachable": true}, "notion_configured": false, "web_search_enabled": false}` |
 | `GET /preferences` | List |
 | `DELETE /preferences/{id}` | Undoable |
 

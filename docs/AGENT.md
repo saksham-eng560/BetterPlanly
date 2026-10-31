@@ -116,7 +116,7 @@ Only one run per Thread at a time. A second request while a run is active gets 4
 
 ## Model choice
 
-The default is `qwen2.5:7b`, the most reliable tool-caller at that size in Ollama. Change it with `OLLAMA_MODEL`. Anything with Ollama tool support works (`llama3.1:8b`, `qwen3:8b`, `mistral-nemo`). Temperature is 0.2. The context window is set to 8,192 tokens (`OLLAMA_NUM_CTX`): the system prompt, plan context and tool definitions alone are about 1,700 tokens, so Ollama's 4,096 default would start dropping the instructions once the conversation grows.
+The default is `qwen2.5:14b`. It runs smoothly on a 16 GB Apple Silicon Mac and follows the re-planning instructions more reliably than the 7B. On slower or CPU-only machines use `qwen2.5:7b`, the most reliable tool-caller at that size in Ollama. Change it with `OLLAMA_MODEL`. Anything with Ollama tool support works (`llama3.1:8b`, `qwen3:8b`, `mistral-nemo`). Temperature is 0.2. The context window is set to 8,192 tokens (`OLLAMA_NUM_CTX`): the system prompt, plan context and tool definitions alone are about 1,700 tokens, so Ollama's 4,096 default would start dropping the instructions once the conversation grows.
 
 ## Testing
 
