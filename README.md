@@ -49,7 +49,7 @@ The first run installs dependencies, creates the `planly` database and downloads
 | 16 GB on an older or CPU-only machine | `qwen2.5:7b` | `PLANLY_MODEL=qwen2.5:7b make start` |
 | 8 GB RAM | `qwen2.5:3b` | `PLANLY_MODEL=qwen2.5:3b make start` |
 
-Ollama uses Apple Silicon (Metal) and NVIDIA (CUDA) GPUs automatically. On CPU only, replies take much longer: a 3B model on 2 cores took about 2½ minutes per agent run in testing. The model you pick is saved in `backend/.env`.
+Ollama uses Apple Silicon (Metal) and NVIDIA (CUDA) GPUs automatically. On CPU only, replies take much longer: a 3B model on 2 cores took about 2½ minutes per agent run in testing. A model you pick with `PLANLY_MODEL` is saved in `backend/.env` and used on later runs; remove that `OLLAMA_MODEL` line to go back to the default.
 
 ## Or with Docker
 

@@ -19,6 +19,28 @@ die()  { printf '\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 have() { command -v "$1" >/dev/null 2>&1; }
 env_value() { grep -E "^$1=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- || true; }
 
+# write KEY=value into backend/.env, replacing an existing line (sed -i.bak works on macOS and Linux)
+set_env() {
+  [ -f "$ENV_FILE" ] || cp "$ROOT/backend/.env.example" "$ENV_FILE"
+  if grep -q "^$1=" "$ENV_FILE"; then
+    sed -i.bak "s|^$1=.*|$1=$2|" "$ENV_FILE" && rm -f "$ENV_FILE.bak"
+  else
+    echo "$1=$2" >> "$ENV_FILE"
+  fi
+}
+
+# one-time: older .env.example copies pinned the previous default, which would hide the new one
+CHOSEN="# model chosen with PLANLY_MODEL"
+if [ -z "${PLANLY_MODEL:-}" ] && [ "$(env_value OLLAMA_MODEL)" = "qwen2.5:7b" ] && ! grep -qx "$CHOSEN" "$ENV_FILE"; then
+  sed -i.bak 's|^OLLAMA_MODEL=qwen2.5:7b$|# OLLAMA_MODEL=qwen2.5:7b   (old default, unpinned by start.sh)|' "$ENV_FILE" && rm -f "$ENV_FILE.bak"
+  say "Switched to the new default model qwen2.5:14b (PLANLY_MODEL=qwen2.5:7b make start to go back)"
+fi
+# a model picked with PLANLY_MODEL is remembered for later runs
+if [ -n "${PLANLY_MODEL:-}" ]; then
+  set_env OLLAMA_MODEL "$PLANLY_MODEL"
+  grep -qx "$CHOSEN" "$ENV_FILE" || echo "$CHOSEN" >> "$ENV_FILE"
+fi
+
 MODEL="${PLANLY_MODEL:-$(env_value OLLAMA_MODEL)}"
 MODEL="${MODEL:-qwen2.5:14b}"
 OLLAMA_URL="${OLLAMA_BASE_URL:-$(env_value OLLAMA_BASE_URL)}"
@@ -91,12 +113,7 @@ then run this again."
     die "PostgreSQL is needed. Install and start it (macOS: brew install postgresql@16 && brew services start postgresql@16;
 Ubuntu: sudo apt install postgresql) or start Docker, then run this again."
   fi
-  [ -f "$ENV_FILE" ] || cp "$ROOT/backend/.env.example" "$ENV_FILE"
-  if grep -q '^DATABASE_URL=' "$ENV_FILE"; then
-    sed -i.bak "s|^DATABASE_URL=.*|DATABASE_URL=$DB_URL|" "$ENV_FILE" && rm -f "$ENV_FILE.bak"
-  else
-    echo "DATABASE_URL=$DB_URL" >> "$ENV_FILE"
-  fi
+  set_env DATABASE_URL "$DB_URL"
 fi
 
 # ---------- Ollama on this machine ----------
