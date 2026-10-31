@@ -20,7 +20,10 @@
   min-height: var(--toolbar-h); max-width: calc(var(--content-max) + 2 * var(--s8)); margin: 0 auto;
   padding: var(--s2) var(--s8);
 }
-.brand { font-family: var(--font-rounded); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; color: var(--label-on-env); }
+.brand { font-family: var(--font-rounded); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; color: var(--label-on-env);
+  display: inline-flex; align-items: center; gap: var(--s2); }
+/* the app icon as a small tile, like a macOS window title */
+.brand-icon { flex: none; border-radius: 6px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.3), 0 0 0 0.5px rgb(255 255 255 / 0.25); }
 .toolbar-actions { display: flex; justify-content: flex-end; align-items: center; gap: var(--s2); }
 
 /* round glass ornaments (History, agent toggle); pressed/open = solid white */

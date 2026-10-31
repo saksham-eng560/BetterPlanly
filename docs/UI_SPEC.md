@@ -60,6 +60,19 @@ Display type (≥ 22 px, weight 300) is the only content that sits directly on t
 
 ![Phone](screenshots/phone.png)
 
+## App icon
+
+<img src="assets/icon.png" width="96" alt="Planly icon" align="right">
+
+A white **tick** (done) that starts from a **lime dot** (now), on a glass tile cut from the app's own environment: the cerulean → magenta → coral field, reeds, and a top sheen.
+
+| File | Use |
+|---|---|
+| `frontend/public/icon.svg` | Source for every large size: the reeds, sheen and edge show from 64 px up |
+| `frontend/public/favicon.svg` | Browser tabs and the toolbar brand. The same mark, without reeds or sheen, with a heavier tick so it stays crisp at 16 px |
+| `favicon.ico` (16/32/48), `apple-touch-icon.png` (180, on the night colour), `icon-192/512.png`, `icon-maskable-512.png` (art inside the 80% safe zone) | Generated. After editing an SVG, run `cd frontend && node scripts/make-icons.mjs`, which also refreshes `docs/assets/icon.png` for the README |
+| `site.webmanifest` | Lets Planly be installed as an app, with theme and background `#071640` |
+
 ## Task types
 
 Each type has an on-glass tint. Cards use it as a solid glyph disc (ink icon), as an 8% wash over the platter, and for the ruler ticks.

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- tab-size Planly icon: icon.svg without the reeds and sheen, with a heavier tick -->
+  <defs>
+    <linearGradient id="env" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A5A94"/>
+      <stop offset="0.38" stop-color="#0B74AA"/>
+      <stop offset="0.75" stop-color="#B02E6E"/>
+      <stop offset="1" stop-color="#CC4F62"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#env)"/>
+  <path d="M19 33.5 L28.5 43 L46 23" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="19" cy="33.5" r="5.6" fill="#C6F432"/>
+</svg>
