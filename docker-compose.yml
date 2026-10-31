@@ -1,0 +1,57 @@
+# docker compose up --build  →  http://localhost:8080
+# On a Mac, Ollama in Docker has no GPU. Run Ollama natively instead and set
+# OLLAMA_BASE_URL=http://host.docker.internal:11434 (see README).
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: planly
+      POSTGRES_PASSWORD: planly
+      POSTGRES_DB: planly
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U planly"]
+      interval: 3s
+      retries: 20
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+
+  ollama-pull:  # one-shot: downloads the model on first start
+    image: ollama/ollama:latest
+    depends_on: [ollama]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["sh", "-c", "sleep 3 && ollama pull ${OLLAMA_MODEL:-qwen2.5:7b}"]
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://planly:planly@postgres:5432/planly
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+      NOTION_TOKEN: ${NOTION_TOKEN:-}
+      WEB_SEARCH_ENABLED: ${WEB_SEARCH_ENABLED:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on: [backend]
+
+volumes:
+  pgdata:
+  ollama:

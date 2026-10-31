@@ -1,0 +1,11 @@
+planly: 1
+title: YAML week
+tasks:
+  - id: run
+    title: Morning run
+    type: fitness
+    date: 2026-10-30
+    start: 7:05
+    duration: 30
+  - title: Read
+    start: 10:00

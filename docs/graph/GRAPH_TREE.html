@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Planly — graphify tree viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      margin: 20px 0 0 24px;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #1e3a56;
+    }
+    .controls {
+      margin: 20px 0 15px 24px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 8px 18px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:active {
+      background: #004085;
+    }
+    #tree-container {
+      width: calc(100vw - 48px); /* Adjust for body margin/padding */
+      height: 85vh;
+      overflow: auto;
+      border-radius: 8px;
+      background: #fff;
+      margin-left: 24px;
+      margin-right: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #ddd;
+    }
+    svg {
+      background: #fff;
+      border-radius: 8px;
+      display: block; /* Important for D3 */
+    }
+    .node circle {
+      stroke-width: 2.5px;
+    }
+    .node text { /* Base style for the <text> container */
+      font: 13px 'Segoe UI', sans-serif;
+      paint-order: stroke fill; /* Ensures text is readable over lines */
+      stroke: #fff; /* White halo */
+      stroke-width: 3px; /* Halo thickness */
+      stroke-linejoin: round;
+      stroke-opacity: 0.85; /* Halo opacity */
+    }
+    .link {
+      fill: none;
+      stroke-opacity: 0.7;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Planly — Knowledge Graph</h1>
+  <div class="controls">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+    <button onclick="resetView()">Reset View</button>
+  </div>
+  <div id="tree-container">
+    <svg id="tree-svg" width="6000" height="8000"></svg>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const initialJsonData = {"name":"Planly","total_count":526,"children":[{"name":"backend","total_count":318,"children":[{"name":"alembic","total_count":5,"children":[{"name":"env.py","total_count":3,"children":[{"name":"database_url()","total_count":1,"children":[]},{"name":"run_migrations_offline()","total_count":1,"children":[]},{"name":"run_migrations_online()","total_count":1,"children":[]}]},{"name":"versions","total_count":2,"children":[{"name":"0001_initial_schema.py","total_count":2,"children":[{"name":"downgrade()","total_count":1,"children":[]},{"name":"upgrade()","total_count":1,"children":[]}]}]}]},{"name":"app","total_count":235,"children":[{"name":"agent","total_count":62,"children":[{"name":"graph.py","total_count":16,"children":[{"name":"_minutes_between()","total_count":1,"children":[]},{"name":"_sendable()","total_count":1,"children":[]},{"name":"_span()","total_count":1,"children":[]},{"name":"agent()","total_count":1,"children":[]},{"name":"AgentState","total_count":1,"children":[]},{"name":"build_graph()","total_count":1,"children":[]},{"name":"day_review_message()","total_count":1,"children":[]},{"name":"Describe what the user just did, including whether a task finished early or\u2026","total_count":1,"children":[]},{"name":"load_context()","total_count":1,"children":[]},{"name":"Recent history the model can accept: drop tool calls whose results never\u2026","total_count":1,"children":[]},{"name":"render_context()","total_count":1,"children":[]},{"name":"route()","total_count":1,"children":[]},{"name":"summarize()","total_count":1,"children":[]},{"name":"task_event_message()","total_count":1,"children":[]},{"name":"The Planly agent: START \u2192 load_context \u2192 agent \u21c4 tools \u2192 summarize \u2192 END\u2026","total_count":1,"children":[]},{"name":"trigger_human_message()","total_count":1,"children":[]}]},{"name":"runtime.py","total_count":14,"children":[{"name":".__init__()","total_count":1,"children":[]},{"name":".busy()","total_count":1,"children":[]},{"name":".config()","total_count":1,"children":[]},{"name":".first_message()","total_count":1,"children":[]},{"name":".open()","total_count":1,"children":[]},{"name":".reachable()","total_count":1,"children":[]},{"name":".stream()","total_count":1,"children":[]},{"name":".thread()","total_count":1,"children":[]},{"name":"AgentBusy","total_count":1,"children":[]},{"name":"AgentRuntime","total_count":1,"children":[]},{"name":"AgentRuntime: the one interface the API uses to run and inspect the agent. Owns\u2026","total_count":1,"children":[]},{"name":"make_ollama()","total_count":1,"children":[]},{"name":"Run the agent once, yielding (event, data) pairs: token, tool_call,\u2026","total_count":1,"children":[]},{"name":"Runtime with a pooled Postgres checkpointer (tables created on first use).","total_count":1,"children":[]}]},{"name":"scheduler.py","total_count":9,"children":[{"name":".length()","total_count":1,"children":[]},{"name":"_minutes()","total_count":1,"children":[]},{"name":"_overlaps()","total_count":1,"children":[]},{"name":"_time()","total_count":1,"children":[]},{"name":"Deterministic day re-planner. Pure: no I/O, no LLM (ADR-0001). Fixed tasks\u2026","total_count":1,"children":[]},{"name":"Placement","total_count":1,"children":[]},{"name":"replan()","total_count":1,"children":[]},{"name":"Return a Placement for every task whose date or start changes. `tasks`: todo\u2026","total_count":1,"children":[]},{"name":"Slot","total_count":1,"children":[]}]},{"name":"tools.py","total_count":22,"children":[{"name":"_date()","total_count":1,"children":[]},{"name":"_time()","total_count":1,"children":[]},{"name":"Agent tools: thin wrappers over TaskService (actor=\"agent\"), one Change set per\u2026","total_count":1,"children":[]},{"name":"build_tools()","total_count":1,"children":[]},{"name":"create_task()","total_count":1,"children":[]},{"name":"evaluate_progress()","total_count":1,"children":[]},{"name":"find_resources()","total_count":1,"children":[]},{"name":"format_task()","total_count":1,"children":[]},{"name":"get_task()","total_count":1,"children":[]},{"name":"guarded()","total_count":1,"children":[]},{"name":"list_tasks()","total_count":1,"children":[]},{"name":"local_now()","total_count":1,"children":[]},{"name":"remember_preference()","total_count":1,"children":[]},{"name":"replan_day()","total_count":1,"children":[]},{"name":"reschedule_task()","total_count":1,"children":[]},{"name":"save_resource()","total_count":1,"children":[]},{"name":"service()","total_count":1,"children":[]},{"name":"The browser's wall-clock time for this run (naive).","total_count":1,"children":[]},{"name":"to_slot()","total_count":1,"children":[]},{"name":"update_task()","total_count":1,"children":[]},{"name":"web_search()","total_count":1,"children":[]},{"name":"wrapper()","total_count":1,"children":[]}]},{"name":"__init__.py","total_count":1,"children":[]}]},{"name":"api","total_count":31,"children":[{"name":"agent.py","total_count":5,"children":[{"name":"events()","total_count":1,"children":[]},{"name":"run()","total_count":1,"children":[]},{"name":"sse()","total_count":1,"children":[]},{"name":"Start an agent run and stream it as Server-Sent Events\u2026","total_count":1,"children":[]},{"name":"thread()","total_count":1,"children":[]}]},{"name":"deps.py","total_count":4,"children":[{"name":"get_runtime()","total_count":1,"children":[]},{"name":"get_service()","total_count":1,"children":[]},{"name":"get_session()","total_count":1,"children":[]},{"name":"get_settings_dep()","total_count":1,"children":[]}]},{"name":"state.py","total_count":10,"children":[{"name":"_persist()","total_count":1,"children":[]},{"name":"delete_preference()","total_count":1,"children":[]},{"name":"export()","total_count":1,"children":[]},{"name":"history()","total_count":1,"children":[]},{"name":"History/undo, imports/export, preferences and the diagnostic state snapshot.","total_count":1,"children":[]},{"name":"import_file()","total_count":1,"children":[]},{"name":"import_notion()","total_count":1,"children":[]},{"name":"preferences()","total_count":1,"children":[]},{"name":"state()","total_count":1,"children":[]},{"name":"undo()","total_count":1,"children":[]}]},{"name":"tasks.py","total_count":11,"children":[{"name":"add_resource()","total_count":1,"children":[]},{"name":"changed()","total_count":1,"children":[]},{"name":"complete()","total_count":1,"children":[]},{"name":"create_task()","total_count":1,"children":[]},{"name":"delete_task()","total_count":1,"children":[]},{"name":"get_task()","total_count":1,"children":[]},{"name":"list_tasks()","total_count":1,"children":[]},{"name":"reschedule()","total_count":1,"children":[]},{"name":"set_checklist_item()","total_count":1,"children":[]},{"name":"uncomplete()","total_count":1,"children":[]},{"name":"update_task()","total_count":1,"children":[]}]},{"name":"__init__.py","total_count":1,"children":[]}]},{"name":"config.py","total_count":3,"children":[{"name":".sqlalchemy_url()","total_count":1,"children":[]},{"name":"get_settings()","total_count":1,"children":[]},{"name":"Settings","total_count":1,"children":[]}]},{"name":"db.py","total_count":2,"children":[{"name":"make_engine()","total_count":1,"children":[]},{"name":"make_sessionmaker()","total_count":1,"children":[]}]},{"name":"importers","total_count":51,"children":[{"name":"__init__.py","total_count":2,"children":[{"name":"Importers: bytes from any supported source \u2192 PlanDraft \u2192 persist_draft(). draft\u2026","total_count":1,"children":[]},{"name":"parse_upload()","total_count":1,"children":[]}]},{"name":"draft.py","total_count":7,"children":[{"name":".__init__()","total_count":1,"children":[]},{"name":"ChecklistDraft","total_count":1,"children":[]},{"name":"PlanDraft","total_count":1,"children":[]},{"name":"PlanParseError","total_count":1,"children":[]},{"name":"ResourceDraft","total_count":1,"children":[]},{"name":"TaskDraft","total_count":1,"children":[]},{"name":"The format-independent shape every importer produces.","total_count":1,"children":[]}]},{"name":"fields.py","total_count":13,"children":[{"name":"45m', '1.5h', '90', 90 \u2192 minutes. Bare numbers are minutes.","total_count":1,"children":[]},{"name":"derived_id()","total_count":1,"children":[]},{"name":"Known type or synonym \u2192 type; anything else \u2192 None (caller decides).","total_count":1,"children":[]},{"name":"Lenient value parsing shared by the Markdown and Notion importers.","total_count":1,"children":[]},{"name":"normalize_priority()","total_count":1,"children":[]},{"name":"normalize_status()","total_count":1,"children":[]},{"name":"normalize_type()","total_count":1,"children":[]},{"name":"Notion API date strings: '2026-10-30' or '2026-10-30T09:30:00.000+05:30' (wall-\u2026","total_count":1,"children":[]},{"name":"Parse Notion's exported dates: 'October 30, 2026', 'October 30, 2026 9:30 AM\u2026","total_count":1,"children":[]},{"name":"parse_duration()","total_count":1,"children":[]},{"name":"parse_iso_when()","total_count":1,"children":[]},{"name":"parse_notion_when()","total_count":1,"children":[]},{"name":"slug()","total_count":1,"children":[]}]},{"name":"markdown.py","total_count":6,"children":[{"name":"_parse_task_line()","total_count":1,"children":[]},{"name":"_split_meta()","total_count":1,"children":[]},{"name":"DSA (study, 90m, high)' \u2192 ('DSA', {...}). Leaves the parens if any token is\u2026","total_count":1,"children":[]},{"name":"finish()","total_count":1,"children":[]},{"name":"Markdown plans and Notion page exports. Rules: docs/PLAN_FORMAT.md#markdown.","total_count":1,"children":[]},{"name":"parse_markdown()","total_count":1,"children":[]}]},{"name":"notion.py","total_count":12,"children":[{"name":"_column_lookup()","total_count":1,"children":[]},{"name":"_draft()","total_count":1,"children":[]},{"name":"_page_to_draft()","total_count":1,"children":[]},{"name":"_plain()","total_count":1,"children":[]},{"name":"Accept a raw id, a dashed UUID or a full notion.so URL.","total_count":1,"children":[]},{"name":"cell()","total_count":1,"children":[]},{"name":"fetch_notion_database()","total_count":1,"children":[]},{"name":"find()","total_count":1,"children":[]},{"name":"normalize_database_id()","total_count":1,"children":[]},{"name":"Notion databases, from a CSV export or live through the Notion API. Both paths\u2026","total_count":1,"children":[]},{"name":"parse_notion_csv()","total_count":1,"children":[]},{"name":"value()","total_count":1,"children":[]}]},{"name":"persist.py","total_count":4,"children":[{"name":"_dedupe_ids()","total_count":1,"children":[]},{"name":"ImportResult","total_count":1,"children":[]},{"name":"persist_draft()","total_count":1,"children":[]},{"name":"Write a PlanDraft through TaskService as one Change set (re-import = upsert).","total_count":1,"children":[]}]},{"name":"plan_file.py","total_count":7,"children":[{"name":"_validator()","total_count":1,"children":[]},{"name":"_yaml_scalars_to_strings()","total_count":1,"children":[]},{"name":"All tasks as a Planly v1 document. Round-trips through parse_plan_file.","total_count":1,"children":[]},{"name":"dump_plan()","total_count":1,"children":[]},{"name":"parse_plan_file()","total_count":1,"children":[]},{"name":"Planly v1 plan files (JSON / YAML): parse, validate, and dump (for export).","total_count":1,"children":[]},{"name":"YAML turns 2026-10-30 into a date and 9:30 into 570 (base 60). Undo both for\u2026","total_count":1,"children":[]}]}]},{"name":"main.py","total_count":7,"children":[{"name":"bad_value()","total_count":1,"children":[]},{"name":"conflict()","total_count":1,"children":[]},{"name":"create_app()","total_count":1,"children":[]},{"name":"health()","total_count":1,"children":[]},{"name":"lifespan()","total_count":1,"children":[]},{"name":"not_found()","total_count":1,"children":[]},{"name":"parse_error()","total_count":1,"children":[]}]},{"name":"models.py","total_count":10,"children":[{"name":"Base","total_count":1,"children":[]},{"name":"ChangeSet","total_count":1,"children":[]},{"name":"ChecklistItem","total_count":1,"children":[]},{"name":"Event","total_count":1,"children":[]},{"name":"Plan","total_count":1,"children":[]},{"name":"Preference","total_count":1,"children":[]},{"name":"Resource","total_count":1,"children":[]},{"name":"SQLAlchemy models. Only `services.tasks` writes to these tables (ADR-0004).\u2026","total_count":1,"children":[]},{"name":"Task","total_count":1,"children":[]},{"name":"utcnow()","total_count":1,"children":[]}]},{"name":"schemas.py","total_count":23,"children":[{"name":".fields()","total_count":1,"children":[]},{"name":".of()","total_count":1,"children":[]},{"name":".of()","total_count":1,"children":[]},{"name":".of()","total_count":1,"children":[]},{"name":"AgentRunIn","total_count":1,"children":[]},{"name":"AgentStatus","total_count":1,"children":[]},{"name":"ChangeSetOut","total_count":1,"children":[]},{"name":"ChecklistOut","total_count":1,"children":[]},{"name":"ChecklistPatchIn","total_count":1,"children":[]},{"name":"HTTP request/response shapes (docs/API.md).","total_count":1,"children":[]},{"name":"ImportOut","total_count":1,"children":[]},{"name":"NotionImportIn","total_count":1,"children":[]},{"name":"Only the fields the client sent, with `start` renamed to the column name.","total_count":1,"children":[]},{"name":"PlanOut","total_count":1,"children":[]},{"name":"PreferenceOut","total_count":1,"children":[]},{"name":"RescheduleIn","total_count":1,"children":[]},{"name":"ResourceIn","total_count":1,"children":[]},{"name":"ResourceOut","total_count":1,"children":[]},{"name":"StateOut","total_count":1,"children":[]},{"name":"TaskChange","total_count":1,"children":[]},{"name":"TaskCreateIn","total_count":1,"children":[]},{"name":"TaskOut","total_count":1,"children":[]},{"name":"TaskPatchIn","total_count":1,"children":[]}]},{"name":"services","total_count":45,"children":[{"name":"tasks.py","total_count":44,"children":[{"name":".__init__()","total_count":1,"children":[]},{"name":".__init__()","total_count":1,"children":[]},{"name":"._event()","total_count":1,"children":[]},{"name":".add_preference()","total_count":1,"children":[]},{"name":".add_resource()","total_count":1,"children":[]},{"name":".apply_moves()","total_count":1,"children":[]},{"name":".change_set()","total_count":1,"children":[]},{"name":".change_sets_for_run()","total_count":1,"children":[]},{"name":".complete()","total_count":1,"children":[]},{"name":".counts()","total_count":1,"children":[]},{"name":".create()","total_count":1,"children":[]},{"name":".create_task()","total_count":1,"children":[]},{"name":".delete()","total_count":1,"children":[]},{"name":".delete_preference()","total_count":1,"children":[]},{"name":".delete_task()","total_count":1,"children":[]},{"name":".events_for()","total_count":1,"children":[]},{"name":".get_change_sets()","total_count":1,"children":[]},{"name":".get_task()","total_count":1,"children":[]},{"name":".history()","total_count":1,"children":[]},{"name":".last_change_at()","total_count":1,"children":[]},{"name":".list_preferences()","total_count":1,"children":[]},{"name":".list_tasks()","total_count":1,"children":[]},{"name":".reschedule()","total_count":1,"children":[]},{"name":".set_checklist_item()","total_count":1,"children":[]},{"name":".uncomplete()","total_count":1,"children":[]},{"name":".undo()","total_count":1,"children":[]},{"name":".update()","total_count":1,"children":[]},{"name":".update_task()","total_count":1,"children":[]},{"name":"_from_snapshot()","total_count":1,"children":[]},{"name":"All column values of a row, JSON-safe.","total_count":1,"children":[]},{"name":"Coerce loosely-typed values (from LLM tools, imports) into valid column values.","total_count":1,"children":[]},{"name":"Conflict","total_count":1,"children":[]},{"name":"describe_day()","total_count":1,"children":[]},{"name":"describe_task()","total_count":1,"children":[]},{"name":"Move many tasks as one Change set (used by the re-planner).","total_count":1,"children":[]},{"name":"Moved","total_count":1,"children":[]},{"name":"normalize_task_fields()","total_count":1,"children":[]},{"name":"NotFound","total_count":1,"children":[]},{"name":"Open a Change set; commit it (or drop it if nothing changed) on exit.","total_count":1,"children":[]},{"name":"Recorder","total_count":1,"children":[]},{"name":"snapshot()","total_count":1,"children":[]},{"name":"TaskService","total_count":1,"children":[]},{"name":"TaskService: the single writer for tasks, checklist items, resources and\u2026","total_count":1,"children":[]},{"name":"Writes entities and their Events inside one open Change set.","total_count":1,"children":[]}]},{"name":"__init__.py","total_count":1,"children":[]}]},{"name":"__init__.py","total_count":1,"children":[]}]},{"name":"pyproject.toml","total_count":1,"children":[{"name":"planly-backend","total_count":1,"children":[]}]},{"name":"tests","total_count":77,"children":[{"name":"conftest.py","total_count":4,"children":[{"name":"engine()","total_count":1,"children":[]},{"name":"migrated()","total_count":1,"children":[]},{"name":"session()","total_count":1,"children":[]},{"name":"sessionmaker()","total_count":1,"children":[]}]},{"name":"fakes.py","total_count":6,"children":[{"name":"._generate()","total_count":1,"children":[]},{"name":"._llm_type()","total_count":1,"children":[]},{"name":".bind_tools()","total_count":1,"children":[]},{"name":"call()","total_count":1,"children":[]},{"name":"Replays pre-written AI messages; records what it was shown.","total_count":1,"children":[]},{"name":"ScriptedChatModel","total_count":1,"children":[]}]},{"name":"fixtures","total_count":9,"children":[{"name":"plan.yaml","total_count":9,"children":[{"name":"date","total_count":1,"children":[]},{"name":"duration","total_count":1,"children":[]},{"name":"id","total_count":1,"children":[]},{"name":"planly","total_count":1,"children":[]},{"name":"start","total_count":1,"children":[]},{"name":"tasks","total_count":1,"children":[]},{"name":"title","total_count":1,"children":[]},{"name":"title","total_count":1,"children":[]},{"name":"type","total_count":1,"children":[]}]}]},{"name":"test_agent.py","total_count":12,"children":[{"name":"collect()","total_count":1,"children":[]},{"name":"make()","total_count":1,"children":[]},{"name":"runtime_factory()","total_count":1,"children":[]},{"name":"settings()","total_count":1,"children":[]},{"name":"test_chat_tools_create_task_and_remember_preference()","total_count":1,"children":[]},{"name":"test_day_review_lists_missed_tasks()","total_count":1,"children":[]},{"name":"test_finishing_early_triggers_replan_and_reports_changes()","total_count":1,"children":[]},{"name":"test_one_run_at_a_time()","total_count":1,"children":[]},{"name":"test_resource_and_progress_tools()","total_count":1,"children":[]},{"name":"test_thread_survives_a_new_runtime()","total_count":1,"children":[]},{"name":"test_tool_errors_go_back_to_the_model()","total_count":1,"children":[]},{"name":"test_unreachable_ollama_is_reported()","total_count":1,"children":[]}]},{"name":"test_api.py","total_count":12,"children":[{"name":"api()","total_count":1,"children":[]},{"name":"parse_sse()","total_count":1,"children":[]},{"name":"test_agent_run_streams_sse_and_thread()","total_count":1,"children":[]},{"name":"test_agent_task_event_and_validation()","total_count":1,"children":[]},{"name":"test_create_patch_checklist_resource_delete()","total_count":1,"children":[]},{"name":"test_export_roundtrip()","total_count":1,"children":[]},{"name":"test_health()","total_count":1,"children":[]},{"name":"test_state_and_preferences()","total_count":1,"children":[]},{"name":"test_tick_move_undo_and_history()","total_count":1,"children":[]},{"name":"test_upload_errors()","total_count":1,"children":[]},{"name":"test_upload_lists_and_day_view()","total_count":1,"children":[]},{"name":"upload_sample()","total_count":1,"children":[]}]},{"name":"test_importers.py","total_count":14,"children":[{"name":"_notion_page()","total_count":1,"children":[]},{"name":"test_duplicate_ids_in_one_file_are_disambiguated()","total_count":1,"children":[]},{"name":"test_import_undo_and_export_roundtrip()","total_count":1,"children":[]},{"name":"test_markdown_keeps_unknown_parenthesis_and_done_marks()","total_count":1,"children":[]},{"name":"test_markdown_sample()","total_count":1,"children":[]},{"name":"test_markdown_without_tasks_is_an_error()","total_count":1,"children":[]},{"name":"test_notion_api_access_denied_is_a_parse_error()","total_count":1,"children":[]},{"name":"test_notion_api_paginates_and_maps_properties()","total_count":1,"children":[]},{"name":"test_notion_csv_export()","total_count":1,"children":[]},{"name":"test_plan_file_json_sample()","total_count":1,"children":[]},{"name":"test_plan_file_validation_errors_are_reported()","total_count":1,"children":[]},{"name":"test_plan_file_yaml_handles_dates_and_sexagesimal_times()","total_count":1,"children":[]},{"name":"test_reimport_updates_in_place_and_respects_done()","total_count":1,"children":[]},{"name":"test_unsupported_extension()","total_count":1,"children":[]}]},{"name":"test_scheduler.py","total_count":9,"children":[{"name":"moves()","total_count":1,"children":[]},{"name":"slot()","total_count":1,"children":[]},{"name":"test_anytime_tasks_are_left_alone_and_past_day_overflows()","total_count":1,"children":[]},{"name":"test_clash_with_kept_task_is_resolved()","total_count":1,"children":[]},{"name":"test_compact_pulls_the_day_earlier_in_priority_order()","total_count":1,"children":[]},{"name":"test_future_day_uses_window_start()","total_count":1,"children":[]},{"name":"test_future_tasks_keep_their_time_by_default()","total_count":1,"children":[]},{"name":"test_missed_tasks_fill_today_and_overflow_to_tomorrow()","total_count":1,"children":[]},{"name":"test_passed_task_moves_to_first_gap_after_now_and_around_meetings()","total_count":1,"children":[]}]},{"name":"test_task_service.py","total_count":10,"children":[{"name":"test_agent_change_sets_are_tagged_with_run()","total_count":1,"children":[]},{"name":"test_checklist_and_preferences()","total_count":1,"children":[]},{"name":"test_complete_then_undo_restores_previous_state()","total_count":1,"children":[]},{"name":"test_create_records_one_change_set_with_events()","total_count":1,"children":[]},{"name":"test_delete_and_undo_recreates_task_with_children()","total_count":1,"children":[]},{"name":"test_list_views()","total_count":1,"children":[]},{"name":"test_noop_update_creates_no_change_set()","total_count":1,"children":[]},{"name":"test_reschedule_keeps_time_unless_told_otherwise()","total_count":1,"children":[]},{"name":"test_undo_of_create_removes_task_and_children()","total_count":1,"children":[]},{"name":"test_unknown_type_becomes_other_and_bad_priority_rejected()","total_count":1,"children":[]}]},{"name":"__init__.py","total_count":1,"children":[]}]}]},{"name":"docker-compose.yml","total_count":43,"children":[{"name":"backend","total_count":1,"children":[]},{"name":"build","total_count":1,"children":[]},{"name":"build","total_count":1,"children":[]},{"name":"condition","total_count":1,"children":[]},{"name":"context","total_count":1,"children":[]},{"name":"DATABASE_URL","total_count":1,"children":[]},{"name":"depends_on","total_count":1,"children":[]},{"name":"depends_on","total_count":1,"children":[]},{"name":"depends_on","total_count":1,"children":[]},{"name":"dockerfile","total_count":1,"children":[]},{"name":"entrypoint","total_count":1,"children":[]},{"name":"environment","total_count":1,"children":[]},{"name":"environment","total_count":1,"children":[]},{"name":"environment","total_count":1,"children":[]},{"name":"frontend","total_count":1,"children":[]},{"name":"healthcheck","total_count":1,"children":[]},{"name":"image","total_count":1,"children":[]},{"name":"image","total_count":1,"children":[]},{"name":"image","total_count":1,"children":[]},{"name":"interval","total_count":1,"children":[]},{"name":"NOTION_TOKEN","total_count":1,"children":[]},{"name":"ollama","total_count":1,"children":[]},{"name":"ollama","total_count":1,"children":[]},{"name":"ollama-pull","total_count":1,"children":[]},{"name":"OLLAMA_BASE_URL","total_count":1,"children":[]},{"name":"OLLAMA_HOST","total_count":1,"children":[]},{"name":"OLLAMA_MODEL","total_count":1,"children":[]},{"name":"pgdata","total_count":1,"children":[]},{"name":"ports","total_count":1,"children":[]},{"name":"ports","total_count":1,"children":[]},{"name":"postgres","total_count":1,"children":[]},{"name":"postgres","total_count":1,"children":[]},{"name":"POSTGRES_DB","total_count":1,"children":[]},{"name":"POSTGRES_PASSWORD","total_count":1,"children":[]},{"name":"POSTGRES_USER","total_count":1,"children":[]},{"name":"restart","total_count":1,"children":[]},{"name":"retries","total_count":1,"children":[]},{"name":"services","total_count":1,"children":[]},{"name":"test","total_count":1,"children":[]},{"name":"volumes","total_count":1,"children":[]},{"name":"volumes","total_count":1,"children":[]},{"name":"volumes","total_count":1,"children":[]},{"name":"WEB_SEARCH_ENABLED","total_count":1,"children":[]}]},{"name":"frontend","total_count":158,"children":[{"name":"e2e","total_count":4,"children":[{"name":"smoke.spec.ts","total_count":4,"children":[{"name":"NOW","total_count":1,"children":[]},{"name":"open()","total_count":1,"children":[]},{"name":"ROOT","total_count":1,"children":[]},{"name":"SHOTS","total_count":1,"children":[]}]}]},{"name":"package.json","total_count":40,"children":[{"name":"@playwright/test","total_count":1,"children":[]},{"name":"@playwright/test@1.63.0","total_count":1,"children":[]},{"name":"@tanstack/react-query","total_count":1,"children":[]},{"name":"@tanstack/react-query@5.105.0","total_count":1,"children":[]},{"name":"@types/node","total_count":1,"children":[]},{"name":"@types/node@24.19.2","total_count":1,"children":[]},{"name":"@types/react","total_count":1,"children":[]},{"name":"@types/react-dom","total_count":1,"children":[]},{"name":"@types/react-dom@19.3.0","total_count":1,"children":[]},{"name":"@types/react@19.3.0","total_count":1,"children":[]},{"name":"@vitejs/plugin-react","total_count":1,"children":[]},{"name":"@vitejs/plugin-react@6.1.2","total_count":1,"children":[]},{"name":"build","total_count":1,"children":[]},{"name":"dependencies","total_count":1,"children":[]},{"name":"dev","total_count":1,"children":[]},{"name":"devDependencies","total_count":1,"children":[]},{"name":"e2e","total_count":1,"children":[]},{"name":"lucide-react","total_count":1,"children":[]},{"name":"lucide-react@1.65.0","total_count":1,"children":[]},{"name":"motion","total_count":1,"children":[]},{"name":"motion@14.8.0","total_count":1,"children":[]},{"name":"name","total_count":1,"children":[]},{"name":"preview","total_count":1,"children":[]},{"name":"private","total_count":1,"children":[]},{"name":"react","total_count":1,"children":[]},{"name":"react-dom","total_count":1,"children":[]},{"name":"react-dom@19.3.1","total_count":1,"children":[]},{"name":"react@19.3.1","total_count":1,"children":[]},{"name":"scripts","total_count":1,"children":[]},{"name":"test","total_count":1,"children":[]},{"name":"type","total_count":1,"children":[]},{"name":"typescript","total_count":1,"children":[]},{"name":"typescript@5.9.3","total_count":1,"children":[]},{"name":"version","total_count":1,"children":[]},{"name":"vite","total_count":1,"children":[]},{"name":"vite@8.3.5","total_count":1,"children":[]},{"name":"vitest","total_count":1,"children":[]},{"name":"vitest@5.0.5","total_count":1,"children":[]},{"name":"zustand","total_count":1,"children":[]},{"name":"zustand@5.0.16","total_count":1,"children":[]}]},{"name":"src","total_count":97,"children":[{"name":"app","total_count":17,"children":[{"name":"App.tsx","total_count":2,"children":[{"name":"App()","total_count":1,"children":[]},{"name":"useDayReview()","total_count":1,"children":[]}]},{"name":"queries.ts","total_count":6,"children":[{"name":"useAppState()","total_count":1,"children":[]},{"name":"useHistory()","total_count":1,"children":[]},{"name":"useMissed()","total_count":1,"children":[]},{"name":"useTask()","total_count":1,"children":[]},{"name":"useUnscheduled()","total_count":1,"children":[]},{"name":"useWeekTasks()","total_count":1,"children":[]}]},{"name":"queryClient.ts","total_count":2,"children":[{"name":"queryClient","total_count":1,"children":[]},{"name":"refreshPlan()","total_count":1,"children":[]}]},{"name":"taskActions.ts","total_count":7,"children":[{"name":"fail()","total_count":1,"children":[]},{"name":"moveTask()","total_count":1,"children":[]},{"name":"patchCachedTask()","total_count":1,"children":[]},{"name":"toggleChecklistItem()","total_count":1,"children":[]},{"name":"toggleDone()","total_count":1,"children":[]},{"name":"undo()","total_count":1,"children":[]},{"name":"undoAction()","total_count":1,"children":[]}]}]},{"name":"components","total_count":8,"children":[{"name":"primitives.tsx","total_count":3,"children":[{"name":"Checkbox()","total_count":1,"children":[]},{"name":"Popover()","total_count":1,"children":[]},{"name":"Sheet()","total_count":1,"children":[]}]},{"name":"toasts.tsx","total_count":5,"children":[{"name":"Toast","total_count":1,"children":[]},{"name":"Toaster()","total_count":1,"children":[]},{"name":"ToastPill()","total_count":1,"children":[]},{"name":"ToastStore","total_count":1,"children":[]},{"name":"useToasts","total_count":1,"children":[]}]}]},{"name":"features","total_count":32,"children":[{"name":"chat","total_count":13,"children":[{"name":"agentStore.ts","total_count":9,"children":[{"name":"AgentStore","total_count":1,"children":[]},{"name":"Change","total_count":1,"children":[]},{"name":"ChatItem","total_count":1,"children":[]},{"name":"describeTool()","total_count":1,"children":[]},{"name":"pending","total_count":1,"children":[]},{"name":"queue","total_count":1,"children":[]},{"name":"readReact()","total_count":1,"children":[]},{"name":"RunRequest","total_count":1,"children":[]},{"name":"useAgent","total_count":1,"children":[]}]},{"name":"ChatPanel.tsx","total_count":4,"children":[{"name":"ChatPanel()","total_count":1,"children":[]},{"name":"eventSummary()","total_count":1,"children":[]},{"name":"Item()","total_count":1,"children":[]},{"name":"SUGGESTIONS","total_count":1,"children":[]}]}]},{"name":"checklist","total_count":6,"children":[{"name":"Checklist.tsx","total_count":3,"children":[{"name":"Checklist()","total_count":1,"children":[]},{"name":"Group()","total_count":1,"children":[]},{"name":"Row()","total_count":1,"children":[]}]},{"name":"MoveMenu.tsx","total_count":1,"children":[{"name":"MoveMenu()","total_count":1,"children":[]}]},{"name":"TaskSheet.tsx","total_count":2,"children":[{"name":"RESOURCE_ICONS","total_count":1,"children":[]},{"name":"TaskSheet()","total_count":1,"children":[]}]}]},{"name":"history","total_count":3,"children":[{"name":"HistoryPopover.tsx","total_count":3,"children":[{"name":"ACTOR_ICON","total_count":1,"children":[]},{"name":"Entries()","total_count":1,"children":[]},{"name":"HistoryPopover()","total_count":1,"children":[]}]}]},{"name":"import","total_count":4,"children":[{"name":"ImportSheet.tsx","total_count":4,"children":[{"name":"ImportSheet()","total_count":1,"children":[]},{"name":"Result()","total_count":1,"children":[]},{"name":"run()","total_count":1,"children":[]},{"name":"Tab","total_count":1,"children":[]}]}]},{"name":"timeline","total_count":6,"children":[{"name":"DayTimeline.tsx","total_count":5,"children":[{"name":"DayTimeline()","total_count":1,"children":[]},{"name":"enterExit","total_count":1,"children":[]},{"name":"layoutSpring","total_count":1,"children":[]},{"name":"TaskCard()","total_count":1,"children":[]},{"name":"useNowMinutes()","total_count":1,"children":[]}]},{"name":"WeekStrip.tsx","total_count":1,"children":[{"name":"WeekStrip()","total_count":1,"children":[]}]}]}]},{"name":"lib","total_count":39,"children":[{"name":"api.ts","total_count":16,"children":[{"name":".constructor()","total_count":1,"children":[]},{"name":"api","total_count":1,"children":[]},{"name":"ApiError","total_count":1,"children":[]},{"name":"AppState","total_count":1,"children":[]},{"name":"ChangeSet","total_count":1,"children":[]},{"name":"ChecklistItem","total_count":1,"children":[]},{"name":"ImportResult","total_count":1,"children":[]},{"name":"post()","total_count":1,"children":[]},{"name":"Priority","total_count":1,"children":[]},{"name":"request()","total_count":1,"children":[]},{"name":"Resource","total_count":1,"children":[]},{"name":"Status","total_count":1,"children":[]},{"name":"Task","total_count":1,"children":[]},{"name":"TaskChange","total_count":1,"children":[]},{"name":"TaskType","total_count":1,"children":[]},{"name":"ThreadMessage","total_count":1,"children":[]}]},{"name":"dates.ts","total_count":17,"children":[{"name":"addDays()","total_count":1,"children":[]},{"name":"dayMonth()","total_count":1,"children":[]},{"name":"endTime()","total_count":1,"children":[]},{"name":"formatDuration()","total_count":1,"children":[]},{"name":"isoDate()","total_count":1,"children":[]},{"name":"localNowIso()","total_count":1,"children":[]},{"name":"minutesOf()","total_count":1,"children":[]},{"name":"nextMonday()","total_count":1,"children":[]},{"name":"pad()","total_count":1,"children":[]},{"name":"parseDate()","total_count":1,"children":[]},{"name":"relativeDay()","total_count":1,"children":[]},{"name":"shortDay()","total_count":1,"children":[]},{"name":"timeAgo()","total_count":1,"children":[]},{"name":"timeOf()","total_count":1,"children":[]},{"name":"today()","total_count":1,"children":[]},{"name":"weekdayLong()","total_count":1,"children":[]},{"name":"weekStart()","total_count":1,"children":[]}]},{"name":"sse.ts","total_count":3,"children":[{"name":"parseSseChunk()","total_count":1,"children":[]},{"name":"SseEvent","total_count":1,"children":[]},{"name":"streamSse()","total_count":1,"children":[]}]},{"name":"taskTypes.ts","total_count":2,"children":[{"name":"TASK_TYPES","total_count":1,"children":[]},{"name":"typeOf()","total_count":1,"children":[]}]},{"name":"lib.test.ts","total_count":1,"children":[]}]},{"name":"main.tsx","total_count":1,"children":[]}]},{"name":"tsconfig.json","total_count":15,"children":[{"name":"compilerOptions","total_count":1,"children":[]},{"name":"include","total_count":1,"children":[]},{"name":"isolatedModules","total_count":1,"children":[]},{"name":"jsx","total_count":1,"children":[]},{"name":"lib","total_count":1,"children":[]},{"name":"module","total_count":1,"children":[]},{"name":"moduleResolution","total_count":1,"children":[]},{"name":"noEmit","total_count":1,"children":[]},{"name":"noFallthroughCasesInSwitch","total_count":1,"children":[]},{"name":"noUnusedLocals","total_count":1,"children":[]},{"name":"noUnusedParameters","total_count":1,"children":[]},{"name":"skipLibCheck","total_count":1,"children":[]},{"name":"strict","total_count":1,"children":[]},{"name":"target","total_count":1,"children":[]},{"name":"types","total_count":1,"children":[]}]},{"name":"playwright.config.ts","total_count":1,"children":[]},{"name":"vite.config.ts","total_count":1,"children":[]}]},{"name":"scripts","total_count":7,"children":[{"name":"fake_ollama.py","total_count":7,"children":[{"name":"._json()","total_count":1,"children":[]},{"name":".do_GET()","total_count":1,"children":[]},{"name":".do_POST()","total_count":1,"children":[]},{"name":".log_message()","total_count":1,"children":[]},{"name":"A scripted stand-in for Ollama's /api/chat, for demos and end-to-end tests\u2026","total_count":1,"children":[]},{"name":"decide()","total_count":1,"children":[]},{"name":"Handler","total_count":1,"children":[]}]}]}]};
+
+    function transformData(jsonData) {
+        // Helper function to recursively build the children structure
+        function processNode(node, parentL1StageName) {
+            let displayName = node.name;
+            // Append total_count if it exists and is not already in the name
+            if (node.total_count !== undefined) {
+                if (!/\(Total Count: \d+\)$/.test(displayName)) {
+                    displayName += ` (Total Count: ${node.total_count})`;
+                }
+            }
+
+            const newNode = { name: displayName };
+
+            if (parentL1StageName === "Root") {
+                 newNode.originalStageName = node.name;
+            } else {
+                newNode.originalStageName = parentL1StageName;
+            }
+
+            if (node.children && node.children.length > 0) {
+                const stageNameToPass = (parentL1StageName === "Root") ? node.name : parentL1StageName;
+                newNode.children = node.children.map(child => processNode(child, stageNameToPass));
+            }
+
+            return newNode;
+        }
+
+        let rootDisplayName = jsonData.name;
+        if (jsonData.total_count !== undefined && !/\(Total Count: \d+\)$/.test(rootDisplayName)) {
+            rootDisplayName += ` (Total Count: ${jsonData.total_count})`;
+        }
+
+        return {
+            name: rootDisplayName,
+            originalStageName: "Root",
+            children: (jsonData.children || []).map(child => processNode(child, "Root"))
+        };
+    }
+
+    const treeData = transformData(initialJsonData);
+
+    // Auto-populated phaseColors: every depth-1 child of the root gets
+    // a stable colour from a bigger palette so all top-level dirs are
+    // distinguishable.
+    const PALETTE = [
+      ["#3498DB","#2980B9","#AED6F1"], ["#2ECC71","#27AE60","#A9DFBF"],
+      ["#E74C3C","#C0392B","#F5B7B1"], ["#9B59B6","#8E44AD","#D7BDE2"],
+      ["#F39C12","#D68910","#FAD7A0"], ["#1ABC9C","#117864","#A2D9CE"],
+      ["#34495E","#1B2631","#ABB2B9"], ["#E67E22","#BA4A00","#F5CBA7"],
+      ["#16A085","#0E6655","#A2D9CE"], ["#D35400","#A04000","#EDBB99"],
+      ["#7F8C8D","#566573","#D5DBDB"], ["#C0392B","#7B241C","#F5B7B1"],
+      ["#2E86C1","#1B4F72","#A9CCE3"], ["#28B463","#196F3D","#A9DFBF"],
+      ["#AF7AC5","#6C3483","#D2B4DE"],
+    ];
+    const phaseColors = { "Root": { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+                          "Default": { fill: "#BDC3C7", stroke: "#95A5A6", collapsedFill: "#ECF0F1" } };
+    (initialJsonData.children || []).forEach((c, i) => {
+      const pal = PALETTE[i % PALETTE.length];
+      phaseColors[c.name] = { fill: pal[0], stroke: pal[1], collapsedFill: pal[2] };
+    });
+
+    const levelSpecificPalettes = {
+      0: { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+      2: { fill: "#6ab04c", stroke: "#508a38", collapsedFill: "#a3d391" },
+      3: { fill: "#f0932b", stroke: "#d0730f", collapsedFill: "#f6c07e" },
+      4: { fill: "#be2edd", stroke: "#a01cb3", collapsedFill: "#e08bf2" },
+      5: { fill: "#00a8ff", stroke: "#007ac1", collapsedFill: "#74d2ff" },
+      6: { fill: "#e55039", stroke: "#c23620", collapsedFill: "#f09a8d" },
+      default: { fill: "#747d8c", stroke: "#57606f", collapsedFill: "#a4b0be" }
+    };
+
+    const svgElement = d3.select("#tree-svg");
+    const initialSvgWidth = +svgElement.attr("width");
+    const initialSvgHeight = +svgElement.attr("height");
+    const margin = { top: 40, right: 120, bottom: 80, left: 450 };
+    let width = initialSvgWidth - margin.left - margin.right;
+    let height = initialSvgHeight - margin.top - margin.bottom;
+    const duration = 500;
+    let nodeCounter = 0;
+    const g = svgElement.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const treemap = d3.tree().nodeSize([40, 0]);
+    let rootNode = d3.hierarchy(treeData, d => d.children);
+    rootNode.x0 = 0;
+    rootNode.y0 = 0;
+
+    if (rootNode.children) {
+      rootNode.children.forEach(d_child => {
+        if (d_child.children) { collapseBranch(d_child); }
+      });
+    }
+    updateTree(rootNode);
+
+    function collapseBranch(d) { if (d.children) { d._children = d.children; d._children.forEach(collapseBranch); d.children = null; } }
+    function expandBranch(d) { if (d._children) { d.children = d._children; d._children = null; } if (d.children) { d.children.forEach(expandBranch); } }
+    window.expandAll = () => { expandBranch(rootNode); updateTree(rootNode); };
+    window.collapseAll = () => { if (rootNode.children) { rootNode.children.forEach(collapseBranch); } updateTree(rootNode); };
+    window.resetView = () => { if (rootNode.children) { rootNode.children.forEach(d_child => { if (d_child.children || d_child._children) { collapseBranch(d_child); } }); } if (rootNode._children && !rootNode.children) { rootNode.children = rootNode._children; rootNode._children = null; } updateTree(rootNode); };
+
+    function updateTree(source) {
+      const treeLayoutData = treemap(rootNode);
+      let nodes = treeLayoutData.descendants();
+      let links = treeLayoutData.descendants().slice(1);
+
+      let minX = 0;
+      let maxX = 0;
+      if (nodes.length > 0) {
+        minX = d3.min(nodes, d => d.x);
+        maxX = d3.max(nodes, d => d.x);
+      }
+
+      let neededHeight = Math.max(initialSvgHeight, maxX - minX + margin.top + margin.bottom + 100);
+      svgElement.transition().duration(duration / 2).attr("height", neededHeight);
+      g.transition().duration(duration / 2).attr("transform", `translate(${margin.left},${margin.top - minX + 40})`);
+
+      nodes.forEach(d => { d.y = d.depth * 400; }); // Adjust horizontal separation if needed
+
+      const node = g.selectAll('g.node').data(nodes, d => d.id || (d.id = ++nodeCounter));
+      const nodeEnter = node.enter().append('g')
+        .attr('class', d => "node" + (d.children || d._children ? " node--internal" : " node--leaf") + (d._children ? " _children" : ""))
+        .attr('transform', d => `translate(${source.y0},${source.x0})`)
+        .on('click', (event, d) => { if (d.children) { d._children = d.children; d.children = null; } else if (d._children) { d.children = d._children; d._children = null; } updateTree(d); })
+        .style('cursor', d => (d.children || d._children) ? 'pointer' : 'default');
+
+      nodeEnter.append('circle').attr('r', 1e-6);
+
+      nodeEnter.append('text')
+        .attr('dy', '.35em')
+        .attr('x', d => d.children || d._children ? -14 : 14)
+        .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+        .style("fill-opacity", 1e-6)
+        .call(wrapText, 380);
+
+      const nodeUpdate = nodeEnter.merge(node);
+      nodeUpdate.transition().duration(duration)
+        .attr('transform', d => `translate(${d.y},${d.x})`)
+        .attr('class', d => "node" + (d.children ? " node--internal" : " node--leaf") + (d._children ? " node--internal _children" : ""));
+
+      nodeUpdate.select('circle').attr('r', 8.5)
+        .style('fill', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            if (d._children) return palette.collapsedFill;
+            if (d.children) return palette.fill;
+            return "#fff";
+        })
+        .style('stroke', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            return palette.stroke;
+        });
+      nodeUpdate.select('text').style("fill-opacity", 1).call(wrapText, 380);
+
+      const nodeExit = node.exit().transition().duration(duration).attr('transform', d => `translate(${source.y},${source.x})`).remove();
+      nodeExit.select('circle').attr('r', 1e-6);
+      nodeExit.select('text').style('fill-opacity', 1e-6);
+
+      const link = g.selectAll('path.link').data(links, d => d.id);
+      const linkEnter = link.enter().insert('path', "g").attr('class', 'link').attr('d', d => { const o = { x: source.x0, y: source.y0 }; return diagonal(o, o); });
+
+      linkEnter.merge(link).transition().duration(duration).attr('d', d => diagonal(d, d.parent))
+        .style('stroke', d => {
+            const sourceNode = d.parent;
+            if (!sourceNode) return phaseColors.Default.stroke;
+            const l1AncestorName = sourceNode.data.originalStageName;
+            const colorPalette = phaseColors[l1AncestorName] || phaseColors.Default;
+            return colorPalette.stroke;
+        });
+      link.exit().transition().duration(duration).attr('d', d => { const o = { x: source.x, y: source.y }; return diagonal(o, o); }).remove();
+      nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
+    }
+
+    function diagonal(s, d) { return `M ${s.y} ${s.x} C ${(s.y + d.y) / 2} ${s.x}, ${(s.y + d.y) / 2} ${d.x}, ${d.y} ${d.x}`; }
+
+    function wrapText(textElements, maxWidth) {
+        const textPartColors = {
+            name: '#343a40',
+            count: '#0056b3'
+        };
+        const countRegex = /(\s\(Total Count: \d+\))$/;
+
+        textElements.each(function () {
+            const textD3 = d3.select(this);
+            const originalNodeText = textD3.datum().data.name;
+            const x = parseFloat(textD3.attr("x") || 0);
+            const initialDy = textD3.attr("dy");
+            const textAnchor = textD3.attr("text-anchor");
+            const lineHeight = 1.1;
+
+            textD3.text(null);
+
+            let namePart = originalNodeText;
+            let countPartText = "";
+
+            const countMatch = originalNodeText.match(countRegex);
+            if (countMatch && originalNodeText.endsWith(countMatch[0])) {
+                namePart = originalNodeText.substring(0, originalNodeText.length - countMatch[0].length).trim();
+                countPartText = countMatch[0].trim();
+            }
+
+            const tokens = [];
+            namePart.split(/\s+/).filter(Boolean).forEach(word => {
+                tokens.push({ text: word, type: 'name' });
+            });
+            if (countPartText) {
+                tokens.push({ text: countPartText, type: 'count' });
+            }
+
+            if (tokens.length === 0 && originalNodeText) {
+                tokens.push({ text: originalNodeText, type: 'name' });
+            }
+
+            let currentTspan = textD3.append("tspan").attr("x", x).attr("dy", initialDy);
+            if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+
+            let lineTokens = [];
+
+            for (let i = 0; i < tokens.length; i++) {
+                const tokenObj = tokens[i];
+
+                lineTokens.push(tokenObj);
+                currentTspan.text(lineTokens.map(t => t.text).join(" "));
+
+                if (currentTspan.node().getComputedTextLength() > maxWidth && lineTokens.length > 1) {
+                    lineTokens.pop();
+
+                    currentTspan.text(null);
+                    lineTokens.forEach((prevToken, idx) => {
+                        currentTspan.append("tspan")
+                            .text((idx > 0 ? " " : "") + prevToken.text)
+                            .style("fill", textPartColors[prevToken.type] || textPartColors.name)
+                            .style("font-weight", prevToken.type === 'count' ? "bold" : "normal");
+                    });
+
+                    lineTokens = [tokenObj];
+                    currentTspan = textD3.append("tspan").attr("x", x).attr("dy", lineHeight + "em");
+                    if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+                }
+            }
+
+            currentTspan.text(null);
+            lineTokens.forEach((token, idx) => {
+                currentTspan.append("tspan")
+                    .text((idx > 0 ? " " : "") + token.text)
+                    .style("fill", textPartColors[token.type] || textPartColors.name)
+                    .style("font-weight", token.type === 'count' ? "bold" : "normal");
+            });
+
+            if (textD3.selectAll("tspan > tspan").empty() && textD3.select("tspan").text().length === 0 && originalNodeText) {
+                let t = textD3.select("tspan");
+                let displayText = originalNodeText;
+                t.text(displayText).style("fill", textPartColors.name);
+                if (t.node() && t.node().getComputedTextLength() > maxWidth && displayText.length > 20) {
+                    let estimatedChars = Math.floor(maxWidth / (t.node().getComputedTextLength()/displayText.length) );
+                    displayText = displayText.substring(0, Math.max(0, estimatedChars - 3)) + "...";
+                    t.text(displayText);
+                }
+            }
+        });
+    }
+  </script>
+</body>
+</html>

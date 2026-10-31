@@ -1,0 +1,112 @@
+{
+  "planly": "1",
+  "title": "Late October sprint",
+  "tasks": [
+    {
+      "id": "read-ddia-ch5",
+      "title": "Read DDIA chapter 5 — Replication",
+      "type": "reading",
+      "date": "2026-10-29",
+      "start": "20:00",
+      "duration": 45,
+      "priority": "medium",
+      "resources": [
+        { "title": "Designing Data-Intensive Applications", "kind": "book" }
+      ]
+    },
+    {
+      "id": "morning-run",
+      "title": "Morning run",
+      "type": "fitness",
+      "date": "2026-10-30",
+      "start": "07:00",
+      "duration": 40,
+      "priority": "medium",
+      "checklist": ["Warm-up 5 min", "5 km easy pace", "Stretch"]
+    },
+    {
+      "id": "dsa-graphs",
+      "title": "DSA practice — graphs",
+      "type": "study",
+      "date": "2026-10-30",
+      "start": "09:30",
+      "duration": 90,
+      "priority": "high",
+      "notes": "Focus on BFS/DFS variants and shortest paths. Two medium problems minimum.",
+      "tags": ["dsa"],
+      "checklist": ["BFS on grid", "Dijkstra with heap", { "title": "Review mistakes", "done": false }],
+      "resources": [
+        { "title": "CP-Algorithms: Breadth-first search", "url": "https://cp-algorithms.com/graph/breadth-first-search.html", "kind": "article" },
+        { "title": "CP-Algorithms: Dijkstra", "url": "https://cp-algorithms.com/graph/dijkstra.html", "kind": "article" }
+      ]
+    },
+    {
+      "id": "standup",
+      "title": "Team stand-up",
+      "type": "meeting",
+      "date": "2026-10-30",
+      "start": "11:30",
+      "duration": 15,
+      "priority": "medium"
+    },
+    {
+      "id": "planly-api",
+      "title": "Build Planly task API",
+      "type": "work",
+      "date": "2026-10-30",
+      "start": "13:00",
+      "duration": 120,
+      "priority": "high",
+      "checklist": ["Models", "Task service", "Routers", "Tests"],
+      "resources": [
+        { "title": "FastAPI tutorial", "url": "https://fastapi.tiangolo.com/tutorial/", "kind": "doc" },
+        { "title": "LangGraph docs", "url": "https://langchain-ai.github.io/langgraph/", "kind": "doc" }
+      ]
+    },
+    {
+      "id": "groceries",
+      "title": "Groceries",
+      "type": "errand",
+      "date": "2026-10-30",
+      "duration": 30,
+      "priority": "low",
+      "checklist": ["Oats", "Eggs", "Spinach", "Coffee"]
+    },
+    {
+      "id": "journal",
+      "title": "Evening journal",
+      "type": "habit",
+      "date": "2026-10-30",
+      "start": "21:30",
+      "duration": 15,
+      "priority": "low"
+    },
+    {
+      "id": "python-async",
+      "title": "Learn Python asyncio patterns",
+      "type": "study",
+      "date": "2026-10-31",
+      "start": "10:00",
+      "duration": 60,
+      "priority": "medium",
+      "resources": [
+        { "title": "asyncio — Python docs", "url": "https://docs.python.org/3/library/asyncio.html", "kind": "doc" }
+      ]
+    },
+    {
+      "id": "call-family",
+      "title": "Call family",
+      "type": "personal",
+      "date": "2026-11-01",
+      "start": "18:00",
+      "duration": 30,
+      "priority": "medium"
+    },
+    {
+      "id": "portfolio-ideas",
+      "title": "Brainstorm portfolio project ideas",
+      "type": "personal",
+      "priority": "low"
+    }
+  ]
+}
