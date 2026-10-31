@@ -27,7 +27,7 @@ services:
     depends_on: [ollama]
     environment:
       OLLAMA_HOST: http://ollama:11434
-    entrypoint: ["sh", "-c", "sleep 3 && ollama pull ${OLLAMA_MODEL:-qwen2.5:7b}"]
+    entrypoint: ["sh", "-c", "sleep 3 && ollama pull ${OLLAMA_MODEL:-qwen2.5:14b}"]
     restart: "no"
 
   backend:
@@ -37,7 +37,7 @@ services:
     environment:
       DATABASE_URL: postgresql://planly:planly@postgres:5432/planly
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:14b}
       NOTION_TOKEN: ${NOTION_TOKEN:-}
       WEB_SEARCH_ENABLED: ${WEB_SEARCH_ENABLED:-false}
     depends_on:

@@ -1,5 +1,5 @@
 import { Plus, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Toaster } from "../components/toasts";
 import { ChatPanel } from "../features/chat/ChatPanel";
@@ -33,6 +33,20 @@ function useDayReview(today: string, missedCount: number | undefined) {
   }, [today, missedCount, dayReview]);
 }
 
+const DRAWER_QUERY = "(max-width: 1080px)"; // keep in step with app.css
+
+/** True while the agent is a drawer over the page (narrow windows) rather than a side window. */
+function useDrawerLayout() {
+  const [narrow, setNarrow] = useState(() => window.matchMedia(DRAWER_QUERY).matches);
+  useEffect(() => {
+    const query = window.matchMedia(DRAWER_QUERY);
+    const update = () => setNarrow(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return narrow;
+}
+
 export function App() {
   const today = todayIso();
   const [selected, setSelected] = useState(today);
@@ -49,6 +63,28 @@ export function App() {
   const running = useAgent((s) => s.running);
   useDayReview(today, missed.data?.length);
 
+  // the open drawer is modal: the page behind it is inert, focus starts on its Close button and
+  // goes back to the toggle when it closes (Close, Escape or the scrim)
+  const drawerOpen = useDrawerLayout() && chatOpen;
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const inspectorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const drawer = inspectorRef.current;
+    const frame = requestAnimationFrame(() => drawer?.querySelector<HTMLElement>("[data-drawer-close]")?.focus());
+    const onKey = (e: KeyboardEvent) => {
+      // a sheet or menu on top gets Escape first
+      if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector("dialog[open]")) setChatOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKey);
+      const active = document.activeElement;
+      if (!active || active === document.body || drawer?.contains(active)) toggleRef.current?.focus();
+    };
+  }, [drawerOpen]);
+
   const dayTasks = useMemo(
     () => (weekTasks.data ?? []).filter((t) => t.date === selected),
     [weekTasks.data, selected],
@@ -59,21 +95,22 @@ export function App() {
 
   return (
     <div className="app" data-chat-open={chatOpen || undefined}>
-      <div className="main-column">
-        <header className="toolbar material">
+      <div className="main-column" inert={drawerOpen || undefined}>
+        <header className="toolbar">
           <div className="toolbar-inner">
             <span className="brand">Planly</span>
             <WeekStrip weekStart={week} selected={selected} today={today} tasks={weekTasks.data ?? []} onSelect={setSelected} />
             <div className="toolbar-actions">
-              {!isToday && <button className="btn btn-gray" onClick={() => setSelected(today)}>Today</button>}
               <HistoryPopover />
-              <button className="btn btn-tinted" aria-label="Import" onClick={() => setImportOpen(true)}>
-                <Plus size={16} strokeWidth={2.25} /> <span className="btn-label">Import</span>
+              <button className="btn btn-filled import-btn" aria-label="Import" onClick={() => setImportOpen(true)}>
+                <Plus size={16} strokeWidth={2.5} /> <span className="btn-label">Import</span>
               </button>
               <button
-                className="icon-btn chat-toggle"
+                ref={toggleRef}
+                className="icon-btn ornament chat-toggle"
                 aria-label="Open the agent"
-                aria-pressed={chatOpen}
+                aria-expanded={drawerOpen}
+                aria-controls="agent"
                 onClick={() => setChatOpen((o) => !o)}
               >
                 <Sparkles size={20} strokeWidth={1.75} />
@@ -85,7 +122,10 @@ export function App() {
 
         <main className="content">
           <div className="day-head">
-            <h1>{isToday ? "Today" : weekdayLong(selected)}</h1>
+            <div className="day-title">
+              <h1>{isToday ? "Today" : weekdayLong(selected)}</h1>
+              {!isToday && <button className="btn today-btn ornament" onClick={() => setSelected(today)}>Today</button>}
+            </div>
             <p className="tabular">
               {isToday ? `${weekdayLong(selected)}, ${dayMonth(selected)}` : dayMonth(selected)}
               {dayTasks.length > 0 && ` · ${done} of ${dayTasks.length} done`}
@@ -93,9 +133,9 @@ export function App() {
           </div>
 
           {weekTasks.isLoading ? (
-            <div className="skeleton" aria-hidden="true"><span /><span /><span /></div>
+            <div className="skeleton glass-regular" aria-hidden="true"><span /><span /><span /></div>
           ) : weekTasks.isError ? (
-            <p className="load-error" role="alert">Can't reach the Planly backend. Is it running on port 8000?</p>
+            <p className="load-error glass-regular" role="alert">Can't reach the Planly backend. Is it running on port 8000?</p>
           ) : (
             <DayTimeline tasks={dayTasks} isToday={isToday} onOpen={open} onImport={() => setImportOpen(true)} />
           )}
@@ -110,8 +150,8 @@ export function App() {
         </main>
       </div>
 
-      <div className="inspector">
-        <ChatPanel state={state.data} onClose={chatOpen ? () => setChatOpen(false) : undefined} />
+      <div id="agent" className="inspector" ref={inspectorRef}>
+        <ChatPanel state={state.data} onClose={drawerOpen ? () => setChatOpen(false) : undefined} />
       </div>
       <div className="scrim" onClick={() => setChatOpen(false)} aria-hidden="true" />
 

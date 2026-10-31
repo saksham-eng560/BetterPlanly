@@ -4,6 +4,7 @@ import { useHistory } from "../../app/queries";
 import { undo } from "../../app/taskActions";
 import { Popover } from "../../components/primitives";
 import type { ChangeSet } from "../../lib/api";
+import { useReducedTransparency } from "../../design/transparency";
 import { timeAgo } from "../../lib/dates";
 
 import "./history.css";
@@ -37,12 +38,23 @@ function Entries({ onUndo }: { onUndo: () => void }) {
   );
 }
 
+/** Safari has no prefers-reduced-transparency, so the app offers the switch itself. */
+function TransparencySetting() {
+  const [reduced, setReduced] = useReducedTransparency();
+  return (
+    <label className="history-setting">
+      <span>Reduce transparency</span>
+      <input className="switch" type="checkbox" role="switch" checked={reduced} onChange={(e) => setReduced(e.target.checked)} />
+    </label>
+  );
+}
+
 export function HistoryPopover() {
   return (
     <Popover
       label="History"
       trigger={({ open, toggle }) => (
-        <button className="icon-btn" aria-label="History" aria-expanded={open} onClick={toggle}>
+        <button className="icon-btn ornament" aria-label="History" aria-haspopup="dialog" aria-expanded={open} onClick={toggle}>
           <History size={20} strokeWidth={1.75} />
         </button>
       )}
@@ -56,6 +68,7 @@ export function HistoryPopover() {
             </a>
           </div>
           <Entries onUndo={close} />
+          <TransparencySetting />
         </div>
       )}
     </Popover>

@@ -17,7 +17,7 @@ const MISSED = "Missed";
 const WIDGET_TINTS = [
   "var(--indigo)", "var(--cyan)", "var(--orange)", "var(--pink)", "var(--purple)",
   "var(--mint)", "var(--teal)", "var(--brown)",
-];  // no yellow: too little contrast for a title on white
+];  // the tint marks the icon disc, checkboxes and a 5% wash; titles stay white
 
 /** A stable colour per section name, so a box keeps its colour across weeks. */
 function tintFor(section: string): string {
@@ -76,7 +76,7 @@ function Row({ task, tint, today, onOpen }: { task: Task; tint: string; today: s
       </button>
       <div className="row-actions">
         <MoveMenu task={task} />
-        <button className="icon-btn secondary" aria-label={`Details and resources for “${task.title}”`} onClick={() => onOpen(task)}>
+        <button className="icon-btn secondary" tabIndex={-1} aria-label={`Details and resources for “${task.title}”`} onClick={() => onOpen(task)}>
           <ChevronRight size={18} strokeWidth={2} />
         </button>
       </div>
@@ -94,7 +94,7 @@ function Widget({ title, tasks, today, onOpen }: { title: string; tasks: Task[];
   return (
     <motion.section
       layout="position"
-      className="widget"
+      className="widget glass-regular"
       style={{ "--tint": tint } as CSSProperties}
       aria-label={title}
       transition={{ type: "spring", duration: 0.45, bounce: 0.12 }}
@@ -102,9 +102,11 @@ function Widget({ title, tasks, today, onOpen }: { title: string; tasks: Task[];
       <header className="widget-head">
         <span className="widget-icon" aria-hidden="true"><Icon size={16} strokeWidth={2.25} /></span>
         <h3>{title}</h3>
-        <span className="widget-count tabular" aria-label={`${done} of ${tasks.length} done`}>
+        <span className="widget-count tabular" aria-hidden="true">
           {title === MISSED ? tasks.length : `${done}/${tasks.length}`}
         </span>
+        {/* announce what the count means, in words that match what it shows */}
+        <span className="visually-hidden">{title === MISSED ? `${tasks.length} missed` : `${done} of ${tasks.length} done`}</span>
       </header>
       <ul className="widget-list">
         <AnimatePresence initial={false}>
@@ -177,7 +179,7 @@ export function Checklist({
           ))}
         </div>
       ) : (
-        <p className="checklist-empty">Import a plan and each of its sections shows up here as its own box.</p>
+        <p className="checklist-empty glass-regular">Import a plan and each of its sections shows up here as its own box.</p>
       )}
     </section>
   );

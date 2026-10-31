@@ -1,4 +1,5 @@
-/* App shell: main column (toolbar, day, checklist) + agent inspector on the right. */
+/* App shell: main column (toolbar, day, checklist) over the environment + the agent window on the right.
+   Nothing here may set transform/filter/opacity/mask on an ancestor of glass. */
 
 .app {
   display: grid;
@@ -6,50 +7,99 @@
   height: 100dvh;
 }
 
-.main-column { min-width: 0; height: 100dvh; overflow-y: auto; scroll-padding-top: var(--toolbar-h); }
+.main-column {
+  min-width: 0; height: 100dvh; overflow-y: auto; scroll-padding-top: var(--toolbar-h); scroll-padding-bottom: var(--s6);
+  scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 0.32) transparent;
+}
 
-.toolbar {
-  position: sticky; top: 0; z-index: 20;
-  border-bottom: 0.5px solid var(--separator);
-}
+/* ---------- toolbar: brand · week capsule · glass circles + white pill (no material; ::before blurs) ---------- */
+
+.toolbar { position: sticky; top: 0; z-index: 20; }
 .toolbar-inner {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--s4);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--s4);
   min-height: var(--toolbar-h); max-width: calc(var(--content-max) + 2 * var(--s8)); margin: 0 auto;
-  padding: var(--s1) var(--s6);
+  padding: var(--s2) var(--s8);
 }
-.brand { font-family: var(--font-rounded); font-size: var(--text-headline); font-weight: 700; letter-spacing: -0.01em; }
-.toolbar-actions { display: flex; align-items: center; gap: var(--s2); }
+.brand { font-family: var(--font-rounded); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; color: var(--label-on-env); }
+.toolbar-actions { display: flex; justify-content: flex-end; align-items: center; gap: var(--s2); }
+
+/* round glass ornaments (History, agent toggle); pressed/open = solid white */
+.toolbar .icon-btn { width: var(--control-h); height: var(--control-h); color: var(--label); }
+.toolbar .icon-btn:is([aria-pressed="true"], [aria-expanded="true"]) { background: #fff; color: var(--ink); }
 .toolbar .chat-toggle { display: none; }
-.activity-dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.activity-dot {
+  position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--signal); box-shadow: 0 0 0 2px var(--solid-thin);
+}
+
+/* Import = the reference's solid white pill */
+.toolbar .import-btn { min-height: var(--control-h); padding: 0 var(--s4) 0 var(--s3); gap: 6px; }
+/* "Today" (another day selected) = ornament pill with a lime dot, beside the headline so the toolbar never shifts */
+.today-btn { min-height: var(--control-h); padding: 0 var(--s4) 0 var(--s3); gap: 6px; color: var(--label); }
+.today-btn::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); }
+
+/* ---------- content ---------- */
 
 .content {
-  display: grid; gap: var(--s10);
+  display: grid; gap: var(--s8);
   max-width: calc(var(--content-max) + 2 * var(--s8)); margin: 0 auto;
-  padding: var(--s8) var(--s8) var(--s16);
+  padding: var(--s6) var(--s8) var(--s16);
 }
-.day-head h1 { font-family: var(--font-display); font-size: var(--text-large-title); font-weight: 700; letter-spacing: -0.022em; line-height: 1.2; }
-.day-head p { margin-top: 2px; font-size: var(--text-subhead); color: var(--label-secondary); }
-.day-head { margin-bottom: calc(-1 * var(--s5)); }
 
-.skeleton { display: grid; gap: var(--s2); }
-.skeleton span { height: 4rem; border-radius: var(--r-md); background: var(--fill-quaternary); }
-.load-error { padding: var(--s4); border-radius: var(--r-md); background: color-mix(in srgb, var(--red) 10%, transparent); color: var(--red); font-size: var(--text-subhead); }
+/* day header: display type straight on the environment's top band (L2) */
+.day-head { margin-bottom: calc(-1 * var(--s3)); }
+.day-title { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.day-head h1 {
+  font-family: var(--font-display); font-size: var(--text-display-xl); font-weight: var(--w-light);
+  letter-spacing: var(--track-display); line-height: 1.02; color: var(--label-on-env);
+  text-shadow: var(--display-halo);
+}
+.day-head p { margin-top: var(--s2); font-size: var(--text-body); color: var(--label-on-env-secondary); }
 
-.inspector { min-width: 0; height: 100dvh; }
+/* loading and error states are windows too */
+.skeleton { display: grid; gap: var(--s2); padding: var(--win-pad); border-radius: var(--r-xl); }
+.skeleton span { height: 4rem; border-radius: var(--r-md); background: var(--platter); animation: pulse 1.2s ease-in-out infinite alternate; }
+@keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+.load-error {
+  --_wash: var(--red-wash);
+  padding: var(--s4) var(--s5); border-radius: var(--r-xl); color: var(--label); font-size: var(--text-subhead);
+}
+
+/* ---------- agent: a floating window inset from the viewport edge ---------- */
+
+.inspector { min-width: 0; height: 100dvh; padding: var(--s2) var(--inspector-inset) var(--inspector-inset) 0; }   /* top lines up with the toolbar */
+.inspector .chat { border-radius: var(--r-xl); overflow: hidden; }
 .scrim { display: none; }
 
-/* narrow: the agent becomes a drawer from the right */
+/* narrow: the agent becomes a drawer from the right. The glass itself slides (a transformed
+   ancestor would cut it off from the environment); the wrapper only positions it. */
 @media (max-width: 1080px) {
   .app { grid-template-columns: minmax(0, 1fr); }
   .toolbar .chat-toggle { display: inline-grid; }
+  .toolbar .import-btn { width: var(--control-h); padding: 0; }   /* a white circle with a plus */
+  .toolbar .btn-label { display: none; }
   .inspector {
-    position: fixed; top: 0; right: 0; bottom: 0; z-index: 30;
-    width: min(var(--inspector-w), 100vw);
-    transform: translateX(100%);
-    transition: transform 320ms var(--ease-drawer);
+    position: fixed; top: var(--s2); right: var(--s2); bottom: var(--s2); z-index: 30;
+    width: min(var(--inspector-w), calc(100vw - 2 * var(--s2))); height: auto; padding: 0;
+    pointer-events: none;
   }
-  .inspector .chat { background: var(--bg-secondary); box-shadow: var(--shadow-float); }
-  .app[data-chat-open] .inspector { transform: translateX(0); }
+  .inspector .chat {
+    pointer-events: auto;
+    visibility: hidden;
+    transform: translateX(calc(100% + var(--s4)));
+    transition: transform var(--dur-drawer) var(--ease-drawer), visibility 0s linear var(--dur-drawer);
+  }
+  .app[data-chat-open] .inspector .chat {
+    visibility: visible;
+    transform: translateX(0);
+    transition: transform var(--dur-drawer) var(--ease-drawer), visibility 0s;
+  }
+  /* the drawer floats over other glass: thick tier (:where keeps the a11y fallbacks in charge) */
+  :where(.inspector) .chat {
+    --_bg: var(--glass-thick-bg); --_hl: var(--glass-thick-hl); --_solid: var(--solid-thick); --_shadow: var(--shadow-float);
+    -webkit-backdrop-filter: blur(40px) saturate(160%);
+    backdrop-filter: blur(40px) saturate(160%);
+  }
   .scrim {
     display: block; position: fixed; inset: 0; z-index: 25;
     background: var(--backdrop); opacity: 0; pointer-events: none;
@@ -57,22 +107,34 @@
   }
   .app[data-chat-open] .scrim { opacity: 1; pointer-events: auto; }
 }
+@media (max-width: 1080px) and (prefers-color-scheme: dark) {
+  :where(.inspector) .chat {
+    -webkit-backdrop-filter: blur(40px) saturate(140%);
+    backdrop-filter: blur(40px) saturate(140%);
+  }
+}
+
+/* ---------- phone ---------- */
 
 @media (max-width: 760px) {
-  .brand { display: none; }
-  .toolbar-inner { padding: var(--s1) var(--s2); gap: var(--s1); }
-  .week-strip .day { width: 2.125rem; }
-  .week-strip > .icon-btn { display: none; }
-  .toolbar-actions { gap: 0; }
-  .toolbar-actions .btn-tinted { width: 2rem; padding: 0; }
-  .toolbar-actions .btn-label { display: none; }
-  .content { padding: var(--s5) var(--s4) var(--s16); gap: var(--s8); }
+  .toolbar { --control-h: 2.25rem; }
+  .brand, .week-strip > .icon-btn { display: none; }
+  .toolbar-inner { display: flex; justify-content: space-between; gap: var(--s1); padding: var(--s2); }
+  .toolbar-actions { gap: var(--s1); }
+  .content { padding: var(--s4) var(--s4) var(--s16); gap: var(--s6); }
+  .content > .glass-regular { border-radius: 28px; }   /* window 28 − padding 8 = platter 20 */
 }
 
 @media (max-width: 480px) {
-  .inspector { width: 100vw; }
+  .inspector { inset: 0; width: 100vw; }
+  .inspector .chat { border-radius: 0; padding-top: env(safe-area-inset-top); }
+  /* full screen covers the whole page, so there is nothing worth seeing through it: go near-solid,
+     like an iOS full-screen sheet. This also stays readable where a large backdrop blur is
+     tiled or skipped (headless Chromium at 2×, low-power GPUs). */
+  :where(.inspector) .chat { --_bg: color-mix(in srgb, var(--_solid) 94%, transparent); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .inspector { transition: none; }
+  .inspector .chat, .app[data-chat-open] .inspector .chat { transition: none; }
+  .skeleton span { animation: none; opacity: 0.75; }
 }

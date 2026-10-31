@@ -17,7 +17,7 @@ NOW = "2026-10-30T10:05:00+05:30"
 @pytest.fixture
 async def api(sessionmaker):  # sessionmaker fixture truncates the app tables
     model = ScriptedChatModel(responses=[])
-    app = create_app(Settings(database_url=TEST_DATABASE_URL, ollama_base_url="http://127.0.0.1:9"), llm=model)
+    app = create_app(Settings(database_url=TEST_DATABASE_URL, ollama_base_url="http://127.0.0.1:9", ollama_model="test-model"), llm=model)
     async with app.router.lifespan_context(app):
         async with app.state.agent.graph.checkpointer.conn.connection() as conn:
             await conn.execute("TRUNCATE checkpoints, checkpoint_blobs, checkpoint_writes")
@@ -119,7 +119,7 @@ async def test_state_and_preferences(api):
     await upload_sample(api)
     state = (await api.get("/api/state", params={"today": "2026-10-30"})).json()
     assert (state["tasks"], state["done"], state["missed"]) == (10, 0, 1)
-    assert state["agent"] == {"model": "qwen2.5:7b", "reachable": False, "busy": False}
+    assert state["agent"] == {"model": "test-model", "reachable": False, "busy": False}
     assert state["notion_configured"] is False and state["web_search_enabled"] is False
     assert (await api.get("/api/preferences")).json() == []
 

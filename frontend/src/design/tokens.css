@@ -1,42 +1,109 @@
-/* Design tokens: Apple system colours, Dynamic Type scale, 8pt spacing, motion.
-   Components use only these variables (docs/UI_SPEC.md). */
+/* Planly "Glass over an environment" tokens (docs/UI_SPEC.md).
+   Glass windows float over a vivid, art-directed environment; all text is white on glass.
+   Existing token names are kept (re-pointed) so every component reads from one place.
+   Contrast figures in the design spec were computed against these exact values: changing an
+   --env-* stop or a glass alpha means re-running the contrast model. */
 
 :root {
-  color-scheme: light dark;
+  /* The UI is light-on-glass in both themes, so native controls (scrollbars, date picker) render dark. */
+  color-scheme: dark;
 
-  /* tints */
-  --blue: #007aff; --green: #34c759; --indigo: #5856d6; --orange: #ff9500;
-  --pink: #ff2d55; --purple: #af52de; --red: #ff3b30; --teal: #30b0c7;
-  --yellow: #ffcc00; --mint: #00c7be; --cyan: #32ade6; --brown: #a2845e; --gray: #8e8e93;
-  --accent: var(--blue);
-  --on-accent: #ffffff;
+  /* ---------- environment: DAY (cerulean → magenta → coral, luminance-capped) ---------- */
+  /* L1: every stop incl. the reed ridge stays at L ≤ 0.23; the top band (top 22vh) at L ≤ 0.13. */
+  --env-base: #0B74AA;
+  --env-top-a: #0A4E86;     /* top band, left: under the brand + "Today" headline */
+  --env-top-b: #0B5F98;     /* top band, right: under the toolbar actions */
+  --env-cerulean: #0B74AA;
+  --env-cyan: #0A7DB0;
+  --env-sky: #0A84BA;       /* brightest blue, mid-left glow */
+  --env-mist: #3D7CA2;      /* desaturated cyan-grey, right side */
+  --env-deep: #1A2C6A;      /* the dark motion-blurred "figure" */
+  --env-deep-2: #1D3C7C;
+  --env-plum: #6A1F5C;      /* fold between figure and core */
+  --env-magenta: #B02E6E;
+  --env-orchid: #9B3A8C;
+  --env-coral: #CC4F62;     /* warm core; the reference's peach/white hot-spot is capped here */
+  --env-amber: #C95A48;     /* hottest stop (L 0.202) */
+  --env-lavender: #6A64A0;
+  --env-rose: #965780;
 
-  /* labels */
-  --label: #000000;
-  --label-secondary: rgba(60, 60, 67, 0.6);
-  --label-tertiary: rgba(60, 60, 67, 0.3);
-  --label-quaternary: rgba(60, 60, 67, 0.18);
+  /* reeded glass over the environment (TECHNIQUE.md: refraction cross-fade + rib lighting) */
+  --reed-pitch: 24px;       /* rib period (measured ≈ 24px at 1440 in the reference) */
+  --reed-shift: 8px;        /* refraction strength, ≈ pitch / 3 */
+  --reed-hi: 0.06;          /* ridge highlight (white), worst case counted in L1 */
+  --reed-lo: 0.07;          /* groove shade */
+  --env-k: 8;               /* motion-blur anisotropy: horizontal blur = k × vertical */
+  --env-blur-v: 4.5px;      /* → 36px horizontal */
 
-  /* backgrounds */
-  --bg: #ffffff;
-  --bg-secondary: #f2f2f7;
-  --bg-tertiary: #ffffff;
-  --bg-grouped: #f2f2f7;
-  --bg-grouped-secondary: #ffffff;
-  --bg-grouped-tertiary: #f2f2f7;
-  --bg-elevated: #ffffff;
+  /* ---------- glass tiers (blur/saturate live as literals in base.css: Safari drops var() there) ---------- */
+  --glass-thin-bg: rgb(10 18 48 / 0.40);      /* toolbar edge + ornaments: blur 16, sat 180% */
+  --glass-thin-hl: 0.08;
+  --glass-regular-bg: rgb(10 18 48 / 0.56);   /* windows: blur 28, sat 170% */
+  --glass-regular-hl: 0.07;
+  --glass-thick-bg: rgb(11 16 40 / 0.66);     /* floating: blur 40, sat 160% */
+  --glass-thick-hl: 0.05;
+  /* opaque twins (reduced transparency, increased contrast, no backdrop-filter support) */
+  --solid-thin: #0A3560;
+  --solid-regular: #282B4F;
+  --solid-thick: #222442;
 
-  /* fills */
-  --fill: rgba(120, 120, 128, 0.2);
-  --fill-secondary: rgba(120, 120, 128, 0.16);
-  --fill-tertiary: rgba(118, 118, 128, 0.12);
-  --fill-quaternary: rgba(116, 116, 128, 0.08);
+  --glass-edge: inset 0 0 0 0.5px rgb(255 255 255 / 0.18);
+  --glass-specular: inset 0 1px 0 rgb(255 255 255 / 0.28), inset 0 -1px 0 rgb(0 0 0 / 0.08);
+  --shadow-window: 0 1px 2px rgb(4 8 30 / 0.10), 0 12px 32px rgb(4 8 30 / 0.20);
+  --shadow-float: 0 0 0 0.5px rgb(255 255 255 / 0.16), 0 8px 24px rgb(4 8 30 / 0.28), 0 24px 64px rgb(4 8 30 / 0.36);
+  --backdrop: rgb(4 8 24 / 0.32);   /* <dialog>::backdrop and drawer scrim */
 
-  /* separators */
-  --separator: rgba(60, 60, 67, 0.29);
-  --separator-opaque: #c6c6c8;
+  /* ---------- platters: flat fills inside a window (no blur) ---------- */
+  --platter: rgb(255 255 255 / 0.06);
+  --platter-hover: rgb(255 255 255 / 0.09);
+  --platter-pressed: rgb(255 255 255 / 0.12);
+  --platter-edge: inset 0 1px 0 rgb(255 255 255 / 0.10), inset 0 0 0 0.5px rgb(255 255 255 / 0.08);
+  --tint-wash-amount: 8%;             /* task-type tint mixed into a task platter */
+  --widget-wash-amount: 5%;           /* section tint mixed into a widget window */
+  --lozenge: rgb(255 255 255 / 0.20); /* selected item in a capsule (week day) */
+  --check-ring: rgb(255 255 255 / 0.74); /* unchecked checkbox stroke (≥ 4.5:1 on platters) */
 
-  /* task types (blue is reserved for the accent) */
+  /* ---------- ink, labels, fills, separators (on glass, both themes) ---------- */
+  --ink: #0B1020;                              /* text/glyphs on white, lime and solid tints */
+  --label: #FFFFFF;
+  --label-secondary: rgb(255 255 255 / 0.84);
+  --label-tertiary: rgb(255 255 255 / 0.62);   /* icons, disabled, decoration: never informative text */
+  --label-quaternary: rgb(255 255 255 / 0.30); /* tick marks, empty dots */
+  --label-on-env: #FFFFFF;
+  --label-on-env-secondary: rgb(255 255 255 / 0.88);
+  --fill: rgb(255 255 255 / 0.18);
+  --fill-secondary: rgb(255 255 255 / 0.14);
+  --fill-tertiary: rgb(255 255 255 / 0.10);
+  --fill-quaternary: rgb(255 255 255 / 0.06);
+  --separator: rgb(255 255 255 / 0.14);
+  --separator-opaque: rgb(255 255 255 / 0.22);
+
+  /* legacy background names, re-pointed */
+  --bg: transparent;
+  --bg-secondary: var(--solid-regular);
+  --bg-tertiary: var(--platter);
+  --bg-grouped: var(--env-base);
+  --bg-grouped-secondary: var(--platter);
+  --bg-grouped-tertiary: var(--platter);
+  --bg-elevated: var(--solid-thick);
+
+  /* ---------- colour roles ---------- */
+  --accent: #FFFFFF;          /* interactive = white (visionOS); filled buttons are white pills */
+  --on-accent: var(--ink);
+  --signal: #C6F432;          /* lime: "now / today / selected / live" indicator only */
+  --on-signal: var(--ink);
+  --focus: var(--signal);
+
+  /* on-glass tints: solid discs, checkbox fills, ruler ticks. Always carry --ink glyphs, never white. */
+  --indigo: #8F8CFF; --cyan: #5CCBFF; --orange: #FFAA3D; --pink: #FF6F91; --purple: #D08CFF;
+  --mint: #5EE6DD; --brown: #C9A27A; --yellow: #FFD84D; --gray: #A8ADBD; --teal: #62D2E6;
+  --red: #FF7A70;             /* missed / destructive disc */
+  --red-text: #FFBDB6;        /* red text: on windows only (≥ 4.65:1 incl. widget wash), never on platters */
+  --red-wash: rgb(255 69 58 / 0.22);
+  --green: var(--signal);     /* green is retired: "on / done / online" is lime */
+  --blue: #5CA8FF;            /* legacy only; not used for interaction */
+  --flag: #FFC46B;            /* high-priority flag glyph */
+
   --type-study: var(--indigo);
   --type-work: var(--cyan);
   --type-reading: var(--orange);
@@ -47,16 +114,24 @@
   --type-personal: var(--yellow);
   --type-other: var(--gray);
 
-  --shadow-float: 0 0 0 0.5px var(--separator), 0 4px 12px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.12);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --backdrop: rgba(0, 0, 0, 0.2);
-
-  /* type */
+  /* ---------- type ---------- */
   --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
   --font-rounded: ui-rounded, "SF Pro Rounded", var(--font-text);
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
 
+  /* display scale: light (300) weight, white, only these elements (L6: never below 22px) */
+  --text-display-xl: clamp(2.75rem, 1.9rem + 3.2vw, 4.5rem);   /* 44–72px: day header h1 */
+  --text-display-l: clamp(2rem, 1.55rem + 1.6vw, 2.75rem);     /* 32–44px: "Checklist" h2 */
+  --text-count: 2rem;                                          /* 32px: widget "4/15" */
+  --text-time-l: 1.75rem;                                      /* 28px: task-sheet time card */
+  --text-progress: 1.5rem;                                     /* 24px: section progress on env */
+  --text-time: 1.375rem;                                       /* 22px: task-card start / end */
+  --w-light: 300;
+  --track-display: -0.035em;
+  --display-halo: 0 1px 2px rgb(4 8 30 / 0.14), 0 0 32px rgb(4 8 30 / 0.22);
+
+  /* Apple Dynamic Type scale */
   --text-large-title: 2.125rem;  /* 34/41 */
   --text-title1: 1.75rem;        /* 28/34 */
   --text-title2: 1.375rem;       /* 22/28 */
@@ -69,64 +144,104 @@
   --text-caption1: 0.75rem;      /* 12/16 */
   --text-caption2: 0.6875rem;    /* 11/13 */
 
-  /* space (8pt grid) */
+  /* ---------- space (8pt grid) ---------- */
   --s1: 0.25rem; --s2: 0.5rem; --s3: 0.75rem; --s4: 1rem; --s5: 1.25rem;
   --s6: 1.5rem; --s8: 2rem; --s10: 2.5rem; --s12: 3rem; --s16: 4rem;
 
-  /* radius */
-  --r-xs: 6px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px; --r-full: 999px;
+  /* ---------- radius (concentric: window 32 − pad 12 = platter 20) ---------- */
+  --r-xs: 8px;        /* tiny tags */
+  --r-sm: 12px;       /* text fields, history rows */
+  --r-md: 20px;       /* platters, fact groups, bubbles */
+  --r-lg: 24px;       /* drop zone */
+  --r-xl: 32px;       /* windows, sheets */
+  --r-widget: 28px;
+  --r-popover: 20px;
+  --r-full: 999px;    /* capsules, pills, circles, checkboxes */
+  --win-pad: 0.75rem;
 
-  /* layout */
-  --toolbar-h: 3.25rem;
+  /* ---------- layout ---------- */
+  --toolbar-h: 4.5rem;
+  --ornament-h: 3.5rem;   /* week capsule */
+  --control-h: 2.5rem;    /* toolbar circles and pills */
   --inspector-w: 23.5rem;
+  --inspector-inset: 0.75rem;
   --content-max: 46rem;
   --hit: 44px;
 
-  /* motion */
+  /* ---------- ruler motif ---------- */
+  --tick-pitch: 6px;
+  --tick-major-every: 30px;   /* every 5th tick */
+  --tick-h: 5px;
+  --tick-major-h: 9px;
+  --ruler-h: 12px;
+
+  /* ---------- motion ---------- */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --dur-press: 160ms;
+  --dur-hover: 120ms;
   --dur-fast: 180ms;
   --dur-base: 240ms;
+  --dur-sheet: 260ms;
+  --dur-drawer: 320ms;
+  --dur-exit: 140ms;
 }
 
+/* ---------- NIGHT: deeper, more saturated environment; glass is relatively lighter than its backdrop ---------- */
 @media (prefers-color-scheme: dark) {
   :root {
-    --blue: #0a84ff; --green: #30d158; --indigo: #5e5ce6; --orange: #ff9f0a;
-    --pink: #ff375f; --purple: #bf5af2; --red: #ff453a; --teal: #40c8e0;
-    --yellow: #ffd60a; --mint: #63e6e2; --cyan: #64d2ff; --brown: #ac8e68; --gray: #8e8e93;
+    --env-base: #0A3C6C;
+    --env-top-a: #071640;
+    --env-top-b: #0A2552;
+    --env-cerulean: #0A3C6C;
+    --env-cyan: #0B4A78;
+    --env-sky: #0D4F86;
+    --env-mist: #1E3B66;
+    --env-deep: #0B0E33;
+    --env-deep-2: #0E1A48;
+    --env-plum: #3A0C43;
+    --env-magenta: #7E1A56;
+    --env-orchid: #6A1F66;
+    --env-coral: #AE3A3E;
+    --env-amber: #A84C2E;
+    --env-lavender: #2C2266;
+    --env-rose: #4A1E4E;
+    --reed-hi: 0.05;
+    --reed-lo: 0.10;
 
-    --label: #ffffff;
-    --label-secondary: rgba(235, 235, 245, 0.6);
-    --label-tertiary: rgba(235, 235, 245, 0.3);
-    --label-quaternary: rgba(235, 235, 245, 0.16);
+    --glass-thin-bg: rgb(20 24 50 / 0.34);      /* sat 160% */
+    --glass-regular-bg: rgb(18 21 44 / 0.50);   /* sat 150% */
+    --glass-thick-bg: rgb(14 17 36 / 0.62);     /* sat 140% */
+    --solid-thin: #0E1B3F;
+    --solid-regular: #251E3B;
+    --solid-thick: #1E1932;
 
-    --bg: #000000;
-    --bg-secondary: #1c1c1e;
-    --bg-tertiary: #2c2c2e;
-    --bg-grouped: #000000;
-    --bg-grouped-secondary: #1c1c1e;
-    --bg-grouped-tertiary: #2c2c2e;
-    --bg-elevated: #2c2c2e;
-
-    --fill: rgba(120, 120, 128, 0.36);
-    --fill-secondary: rgba(120, 120, 128, 0.32);
-    --fill-tertiary: rgba(118, 118, 128, 0.24);
-    --fill-quaternary: rgba(118, 118, 128, 0.18);
-
-    --separator: rgba(84, 84, 88, 0.6);
-    --separator-opaque: #38383a;
-
-    --shadow-float: 0 0 0 0.5px var(--separator), 0 4px 12px rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.45);
-    --shadow-card: none;
-    --backdrop: rgba(0, 0, 0, 0.4);
+    --shadow-window: 0 1px 2px rgb(0 0 0 / 0.20), 0 12px 32px rgb(0 0 0 / 0.35);
+    --shadow-float: 0 0 0 0.5px rgb(255 255 255 / 0.14), 0 8px 24px rgb(0 0 0 / 0.40), 0 24px 64px rgb(0 0 0 / 0.50);
+    --backdrop: rgb(2 4 14 / 0.45);
   }
 }
 
+/* ---------- increased contrast ---------- */
 @media (prefers-contrast: more) {
   :root {
-    --separator: var(--label-tertiary);
-    --label-secondary: color-mix(in srgb, var(--label) 78%, transparent);
+    --label-secondary: rgb(255 255 255 / 0.92);
+    --label-tertiary: rgb(255 255 255 / 0.80);
+    --separator: rgb(255 255 255 / 0.40);
+    --glass-edge: inset 0 0 0 1px rgb(255 255 255 / 0.45);
+    --platter-edge: inset 0 0 0 1px rgb(255 255 255 / 0.30);
+    --lozenge: #FFFFFF;          /* selected = solid white, number switches to --ink */
+    --check-ring: #FFFFFF;
+    --reed-hi: 0; --reed-lo: 0;
+    --w-light: 400;
+    --tint-wash-amount: 0%;
+    --widget-wash-amount: 0%;
   }
+}
+
+/* forced colours: the label and flag roles follow the system text colour, so icons that set
+   `color` from them don't stay white or orange on a white Canvas */
+@media (forced-colors: active) {
+  :root { --label: CanvasText; --label-secondary: CanvasText; --label-tertiary: CanvasText; --flag: CanvasText; }
 }

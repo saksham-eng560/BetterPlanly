@@ -2,7 +2,7 @@
 # Run Planly entirely on this machine: PostgreSQL, Ollama (your CPU/GPU), the API and the web app.
 #
 #   make start                          # or: scripts/start.sh
-#   PLANLY_MODEL=qwen2.5:3b make start  # smaller model for 8 GB machines
+#   PLANLY_MODEL=qwen2.5:7b make start  # lighter model for slower machines (3b for 8 GB)
 #
 # First run installs dependencies, sets up the database and downloads the model; later runs
 # start in seconds. Ctrl-C stops everything this script started.
@@ -20,7 +20,7 @@ have() { command -v "$1" >/dev/null 2>&1; }
 env_value() { grep -E "^$1=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2- || true; }
 
 MODEL="${PLANLY_MODEL:-$(env_value OLLAMA_MODEL)}"
-MODEL="${MODEL:-qwen2.5:7b}"
+MODEL="${MODEL:-qwen2.5:14b}"
 OLLAMA_URL="${OLLAMA_BASE_URL:-$(env_value OLLAMA_BASE_URL)}"
 OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434}"
 

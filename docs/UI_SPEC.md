@@ -1,39 +1,70 @@
 # UI specification
 
-The UI follows two project skills: [`apple-design`](../.claude/skills/apple-design/SKILL.md), which covers the HIG look, and [`emil-design-eng`](../.claude/skills/emil-design-eng/SKILL.md), which covers motion. Tokens live in `frontend/src/design/tokens.css`, and components use nothing else.
+The UI is **glass over an environment**: Apple's visionOS / Liquid Glass language, art-directed after a reference landing page. That page has a vivid motion-blurred backdrop behind reeded glass, frosted panels with ruler ticks, huge light display type, a glass pill nav with a lime dot, and white pill buttons.
 
-| Light | Dark |
+It follows three sources:
+- the project skills [`apple-design`](../.claude/skills/apple-design/SKILL.md) (look) and [`emil-design-eng`](../.claude/skills/emil-design-eng/SKILL.md) (motion)
+- the design spec [docs/design/GLASS_SPEC.md](design/GLASS_SPEC.md)
+- the decision record [ADR 0006](adr/0006-glass-over-an-environment.md)
+
+Tokens live in `frontend/src/design/tokens.css`. The environment and glass tiers live in `frontend/src/design/base.css`. Components use nothing else.
+
+| Day | Night |
 |---|---|
-| ![Today, light](screenshots/today-light.png) | ![Today, dark](screenshots/today-dark.png) |
+| ![Today, day](screenshots/today-light.png) | ![Today, night](screenshots/today-dark.png) |
+
+## Three depths
+
+| Depth | What it is | Where |
+|---|---|---|
+| **Environment** | One fixed CSS layer, the world behind the app. A cerulean → magenta → coral field is painted at 1/k width, blurred and stretched back out with `scaleX(k)`, which gives the reference's horizontal motion blur. A refraction copy sits behind a saw-tooth mask, and reeded-glass ribs (14 px pitch) and a darker top band go on top. It is static: no drift, no `filter`, no blend modes. Its luminance is capped so contrast is computable. | `main.tsx` `<Backdrop/>`, `base.css` `.bg*` |
+| **Windows** | Glass that holds content. There are three tiers: **thin** (toolbar edge, ornaments), **regular** (Day window, widgets, agent window) and **thick** (sheets, popovers, toasts, the narrow-screen drawer). Each has a 0.5 px white edge and a 1 px specular top line. | `.glass-thin`, `.glass-regular`, `.glass-thick` |
+| **Platters** | Flat white 6% fills inside windows, with no blur: task cards, checklist rows, bubbles, fields and pills. | `--platter`, `--platter-edge` |
+
+Display type (≥ 22 px, weight 300) is the only content that sits directly on the environment: the "Today" header, the "Checklist" heading and the progress numbers.
+
+## Colour roles
+- **White is the interactive colour.** Primary buttons (Import, Send, Mark as done) are solid white pills with ink `#0B1020` labels. Secondary controls are glass circles.
+- **Lime `#C6F432` is a signal, not an accent.** It marks *now / today / live* only:
+  - the today dot in the week strip and the now-line with its time capsule
+  - the elapsed ticks on the running task's ruler
+  - the Import tab underline and the agent-online dot
+  - the switch's on state and the focus ring
+- **Hue belongs to content.** Task types and checklist sections use their own colours. A solid colour always carries ink, never white.
+- **Red `#FF7A70`** means Missed (with `--red-text` for words). The **orange flag** marks high priority.
 
 ## Layout
 
 ```
-┌──────────────── main column (scrolls) ─────────────────┬── agent inspector (23.5rem) ──┐
-│ toolbar · material · sticky                            │ header: model status, "React  │
-│   Planly   ‹ M T W T F S S ›      ⟲ History  + Import  │         to ticks" switch      │
-├────────────────────────────────────────────────────────┤ messages (scroll)             │
-│ Large Title "Today" / weekday   · subtitle "x of y done" │  user bubbles · agent bubbles │
-│ ANYTIME   [card] [card]                                │  event chips · tool rows      │
-│ 09:30 ─ [type-coded card, height ∝ duration]           │  change cards with Undo       │
-│ ●──── now-line (today)                                 │ composer                      │
-│        Free · 1h 15m                                   │                               │
-│ Checklist (inset grouped):  Missed · <Day> · Unscheduled│                               │
-└────────────────────────────────────────────────────────┴───────────────────────────────┘
+┌──────────────── main column (scrolls over the fixed environment) ───────┬─ agent window ─┐
+│ toolbar: Planly  (‹ M T W T F S S ›)  ◷  [+ Import]  · glass ornaments  │ glass-regular, │
+│                                                                          │ inset 8–12 px  │
+│ Today                       ← display XL, weight 300, on the environment │ header: model, │
+│ Friday, October 30 · 2 of 10 done                                        │ "React to      │
+│ ┌ Day window (glass-regular) ────────────────────────────────────────┐   │ ticks" switch  │
+│ │ ANYTIME  [platter] [platter] [platter]                              │   │ messages       │
+│ │ [platter: Morning run 07:00–07:40 ◷ 40m]                            │   │ change cards   │
+│ │ Free · 1h 50m ──────────────────────────                         │   │ composer       │
+│ │ [platter: DSA practice  09:30 ──◷ 1h 30m── 11:00  ┆┆┆ruler┆┆┆]      │   │                │
+│ │ (10:05)━━━━━━━━━━━━━━━ lime now-line ━━━━━━━━━━━━━━━━━━━━━━━━━━━     │   │                │
+│ └─────────────────────────────────────────────────────────────────────┘   │                │
+│ Checklist                                            ← display L         │                │
+│ [widget window] [widget window] [widget window]  ← one per section       │                │
+└──────────────────────────────────────────────────────────────────────────┴────────────────┘
 ```
 
-- **Below 1080 px:** the inspector becomes a drawer from the right, opened from the sparkle button in the toolbar, with a dimmed scrim.
-- **Below 760 px:** the brand and week arrows are hidden, and Import becomes an icon button.
-- **Below 480 px:** the drawer takes the full width.
-- **Sheets:** centred on desktop and bottom sheets on phones.
+- **At 1080 px and below:** the agent window becomes a drawer. The glass itself slides in from the right; it is never inside a transformed wrapper, which would cut it off from the environment. It uses the thick tier over a dimmed scrim, and opens from the sparkle ornament.
+- **At 760 px and below:** the brand and the week arrows are hidden.
+- **At 480 px and below:** the drawer is full screen and near-solid, as an iOS full-screen sheet is.
+- **Sheets:** centred on desktop, bottom sheets on phones.
 
 ![Phone](screenshots/phone.png)
 
 ## Task types
 
-Each type has a colour, used at about 13% as the card background, as a 3 px leading edge, and as the glyph colour. Blue is reserved for the accent.
+Each type has an on-glass tint. Cards use it as a solid glyph disc (ink icon), as an 8% wash over the platter, and for the ruler ticks.
 
-| Type | Colour | Icon (Lucide) |
+| Type | Tint | Icon (Lucide) |
 |---|---|---|
 | study | indigo | GraduationCap |
 | work | cyan | Briefcase |
@@ -45,53 +76,70 @@ Each type has a colour, used at about 13% as the card background, as a 3 px lead
 | personal | yellow | Heart |
 | other | gray | Circle |
 
-Colours with fixed meanings:
-- **Red** means Missed only.
-- **Green** means done, and also marks the agent-online dot and the switch.
-- **Orange flag** marks high priority, following Reminders.
-
 ## Components
 
-| Component | Notes |
+| Component | As built |
 |---|---|
-| Task card | `<button>` that opens the task sheet. Shows a glyph circle, a headline title, and a footnote meta line (time range · duration · type). Badges show high priority, checklist progress and resource count. Done cards drop to 55% opacity and show a check glyph. |
-| Widget boxes | The checklist is a grid of cards, one per Section (iOS widget style): 22 px radius, a coloured icon and title, and a large done count. Each box holds that section's tasks for the selected week and the next (so Fri–Thu plan weeks fit), plus its unscheduled ones, with open tasks first and "Show all" after 6. Missed tasks get their own red box first. Section colours come from a hash of the name and skip yellow, which is too low-contrast for titles. |
-| Checklist row | 56 px min-height. A 22 px Reminders-style circular checkbox in the type colour, with the checkmark drawn by `stroke-dashoffset`. Title and meta in the middle. Move and details actions sit at the end in tertiary grey, turning accent on hover. Separators are inset to the text start. |
-| Move menu | Popover on material, opening from its trigger corner. Offers Today, Tomorrow, Next week, Pick a date… (native date input) and Remove date. |
-| Task sheet | Native `<dialog>`, which gives focus trapping, Esc and an inert background. Holds a facts table, notes, steps, resources, "Ask the agent for resources", Move, and Mark as done. |
-| Import sheet | Segmented control with three tabs: Plan file (drop zone and Choose File), Notion (database link) and Agent prompt (preview and Copy). |
-| History popover | Change sets with actor icon, summary, relative time and Undo. Export is in its header. |
-| Toasts | One-line pill on material at the bottom centre, with at most one action (Undo). They stay up for 5 s, pause on hover, and pause while the tab is hidden. |
-| Agent panel | Header shows model, online state and the "React to ticks" switch. User messages are accent bubbles; agent replies are grouped-secondary bubbles. Trigger messages appear as grey chips showing only what happened, never the instructions to the model. Tool calls appear as small activity rows. Each run ends with a change card offering Undo. |
+| Week strip | The reference's pill nav, as a thin-glass capsule. A glass lozenge slides to the selected day (`layoutId="day-lozenge"`), a lime dot marks today, and grey dots mark days with tasks. |
+| Toolbar | The brand, the week strip, History as a glass-circle ornament, and **Import** as a white pill (a white circle with a plus at 1080 px and below). At rest it floats on the environment, with the reeds running to the top edge as in the reference. Its thin-glass edge fades in over the first 3rem of scroll (scroll-driven animation; browsers without it keep the edge on). When another day is selected, a **Today** pill with a lime dot appears beside the headline, so the toolbar never shifts. |
+| Task card | A `<button>` platter. It shows a type disc, a title clamped to 2 lines, and badges (flag, checklist progress, resource count). Short tasks show their time range, a "◷ 40m" duration pill and the type. Timed tasks of 45 min or more show large light Start/End numerals on a hairline with the duration pill, plus a **tick ruler** along the bottom edge. On the running task the ruler's elapsed part is lime. Done cards use secondary text and a strike-through, not opacity. |
+| Now-line | A lime time capsule with a 2 px lime rule. |
+| Free gap | A "Free · 1h 50m" pill on a hairline. The tick ruler is reserved for the cards. |
+| Widget boxes | One glass window per section (iOS widget style), in masonry columns so a short widget leaves no hole beside a tall one. Each has a solid icon disc, a title, and a large light done count, with rows as platters. A widget holds that section's tasks for the selected week and the next, plus its unscheduled ones. Open tasks come first, with "Show all" after 6. Missed tasks get their own red box, shown first. |
+| Checklist row | A 56 px min-height platter row. It has a circular checkbox (a tint ring that fills solid with an ink checkmark), title and meta (today's rows get a lime dot, not lime text), and Move / details actions. With a mouse, the actions appear on hover or focus, like Reminders' info button; on touch they're always shown. |
+| Move menu | A thick-glass popover, portalled to `document.body`, or into the `<dialog>` when used inside a sheet, so blurs never nest. It offers Today, Tomorrow, Next week, Pick a date… and Remove date. |
+| Task sheet | A native `<dialog>` on thick glass. A **time card** echoes the reference's frosted panel, with large Start/End numerals, the duration pill and a ruler. Below it come facts, notes, steps, resources, Move and the white **Mark as done** pill. |
+| Import sheet | Three tabs on a hairline track, with a lime underline that slides between them: Plan file, Notion and Agent prompt. The drop zone turns lime while dragging. The result banner is signal-tinted. |
+| History popover | Shows change sets with actor icon, summary, relative time and Undo. Export is in the header. A **Reduce transparency** switch sits under the log; Safari has no `prefers-reduced-transparency`, so the app provides its own. |
+| Toasts | A one-line thick-glass capsule at the bottom centre with at most one action. It stays up for 5 s, pausing on hover and while the tab is hidden. |
+| Agent window | The header shows the model, an online dot and the "React to ticks" switch. User messages are white bubbles with ink text; agent replies are platters. Trigger messages appear as chips, tool calls as small activity rows, and each run ends with a change card offering Undo. The composer is a platter field next to a white send circle. |
 
 ## Motion
 
 | Interaction | Animation | Why |
 |---|---|---|
-| Button / card / day press | `scale(0.97)` (cards 0.985), 160 ms `--ease-out` | Feedback that the press registered |
-| Card enters / leaves timeline | opacity + `translateY(6px) scale(0.98)` → rest, spring 0.45 s, bounce 0.12; exit 150 ms | Nothing appears from nothing; exits are faster than entrances |
-| Agent or user moves a task | `motion` layout animation keyed by task id (spring) | The card visibly travels to its new slot, so a re-plan reads as one movement |
-| Checkbox tick | fill scales 0.6 → 1 (240 ms ease-out), checkmark draws 240 ms after a 60 ms delay | Shows the state change |
-| Popover | opacity + `scale(0.96)` → 1, 180 ms, origin at the trigger corner | Ties the popover to its trigger |
-| Sheet | `@starting-style` opacity + `scale(0.96)` (desktop) / `translateY(100%)` (phone), 240 ms ease-out; close 120 ms | Modals stay centred and are dismissed quickly |
-| Agent drawer | `translateX`, 320 ms `--ease-drawer` | iOS drawer curve |
-| Toast | spring from `translateY(100%)`, exit 150 ms | Enters and leaves from the same edge |
-| Chat items | opacity + 6 px rise, 200 ms | Streaming text itself is not animated |
+| Press (buttons, pills / platters / circles) | `scale(.97)` / `.985` / `.94`, 160 ms `--ease-out` | Confirms the press |
+| Hover (fine pointer only) | `background-color` 120 ms, no transform | Kept small, because it happens constantly |
+| Selected day / import tab | Lozenge and underline `layoutId` spring | Spatial continuity, as the reference's nav pill slides |
+| Card enters, leaves or is re-planned | Spring 0.45 s, bounce 0.12; exit 150 ms; layout animation keyed by task id | A re-plan reads as one movement |
+| Checkbox tick | Fill scales 0.6 → 1, then the mark draws | Shows the state change |
+| Popover | Opacity + `scale(.96)` → 1, 180 ms, origin at the trigger corner | Ties it to its trigger |
+| Sheet | `@starting-style` opacity + scale (desktop) / `translateY(100%)` (phone) | Modals stay centred |
+| Agent drawer | `translateX` of the glass itself, 320 ms `--ease-drawer` | iOS drawer curve |
+| Toast | Spring from `translateY(100%)`, exit 150 ms | In and out from the same edge |
 
-Not animated:
-- keyboard actions (Enter to send)
-- token-by-token text
-- hover colour changes, beyond a quick `ease`
+**Not animated:**
+- `backdrop-filter` and the environment: they are expensive, and animated blur shimmers
+- theme switches
+- keyboard actions
+- streamed tokens
+- the ruler's progress, which steps every 30 s
 
-**Reduced motion.** `MotionConfig reducedMotion="user"` turns transform animations into fades. CSS press scales, the drawer slide and sheet translation are removed under `prefers-reduced-motion`; opacity changes remain.
+**Reduced motion.** `MotionConfig reducedMotion="user"`. Slides become jumps or fades, and CSS press scales, drawer and sheet translation and the skeleton pulse are removed.
 
 ## Accessibility
-- Every control is a real `<button>`, `<input type="checkbox">` or `<dialog>`. Icon-only buttons have `aria-label`s, such as "Move “Groceries”".
-- Hit targets are at least 44 px. Icon buttons extend theirs with a pseudo-element, and checkboxes have a 44 px label.
-- `:focus-visible` shows a 3 px accent ring at 50% opacity.
-- The app respects `prefers-color-scheme`, `prefers-reduced-motion`, `prefers-reduced-transparency` (materials become opaque) and `prefers-contrast: more` (stronger separators and secondary labels).
-- Text sizes are in `rem`. Times use tabular numerals.
-- The chat log uses `aria-live="polite"`, and toasts use `role="status"`.
+- **Contrast is computed, not eyeballed.** The model is in [docs/design/contrast](design/contrast). Text on glass uses only white or white at 0.84. Tertiary 0.62 is for icons and decoration. Solid colours carry ink.
+- **Fallbacks.** `prefers-reduced-transparency`, the in-app Reduce transparency switch, `prefers-contrast: more`, `forced-colors` and browsers without `backdrop-filter` all switch the glass tiers to opaque twins (`--solid-*`).
+  - More Contrast also dims the environment, removes the reeds, strengthens hairlines and turns the selected day solid white.
+  - Forced colours hide the environment and use system colours. Controls get `ButtonText` edges, switches and the selected day are redrawn in `Highlight`, and icon colours follow `CanvasText`.
+- **Focus.** A 2 px lime ring with a 2 px offset, following border radius. Fields get a solid 2 px lime halo (≥ 3:1 on glass). Focusable elements only sit on glass or the top band.
+- **Modal surfaces.**
+  - **Sheets:** native `<dialog>`.
+  - **Agent drawer (narrow windows):** while it's open, the page behind is `inert`, focus starts on Close, and Escape or the scrim closes it, returning focus to the toggle (`aria-expanded`, `aria-controls`).
+  - **Popovers:** these are `aria-haspopup="dialog"` panels. Escape, a choice, or Tab past either end closes them, and focus returns to the trigger. On a phone they clamp to the viewport.
+- **Keyboard patterns.**
+  - The Import tabs follow WAI-ARIA tabs: roving tabindex, ←/→/Home/End, and a labelled `tabpanel`.
+  - In the week strip the selected day is `aria-pressed` and today is `aria-current="date"`.
+  - Switches are `role="switch"`.
+  - Each checklist row is one tab stop for the sheet; the chevron is a pointer shortcut.
+- **Hit targets.** At least 44 px. Icon buttons, ornaments and the white Import and Send circles are extended by `::after`, and row actions are spaced so their hit areas don't overlap. The phone week-strip days are 30–34 × 48 px (above the 24 px WCAG minimum).
+- **Semantics.** Every control is a real `<button>`, `<input type="checkbox">` or `<dialog>`. Decorative rulers, lozenges and dots are `aria-hidden`. The chat log is `aria-live="polite"`, and toasts use `role="status"`.
+- **Sizing.** Text sizes are in `rem`; times use tabular numerals.
+
+## Performance
+- **Blur budget.** At most 7 `backdrop-filter`s visible at once, never nested; cards, rows and ornaments never blur.
+- **Static environment.** The environment is one fixed layer that doesn't animate, so scrolling never re-rasterises it.
+- **Safari rules.** Use literal values in `-webkit-backdrop-filter`, never `var()`. No `filter`, `opacity < 1`, `mix-blend-mode` or `will-change` on any ancestor of a glass surface. See [GLASS_TECHNIQUE.md](design/GLASS_TECHNIQUE.md).
 
 ## Verification
 `frontend/e2e/smoke.spec.ts` drives the real app with Playwright and writes the screenshots in `docs/screenshots/`. It runs against the backend, Postgres and `scripts/fake_ollama.py`, and covers:

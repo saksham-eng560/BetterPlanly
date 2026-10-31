@@ -1,10 +1,10 @@
-import { BookOpen, FileText, Link2, PlayCircle, Sparkles, StickyNote, X } from "lucide-react";
+import { ArrowUpRight, BookOpen, FileText, Link2, PlayCircle, Sparkles, StickyNote, X } from "lucide-react";
 import type { CSSProperties } from "react";
 
 import { useTask } from "../../app/queries";
 import { toggleChecklistItem, toggleDone } from "../../app/taskActions";
-import { Checkbox, Sheet } from "../../components/primitives";
-import { endTime, formatDuration, relativeDay } from "../../lib/dates";
+import { Checkbox, DurPill, Sheet } from "../../components/primitives";
+import { dayMonth, elapsedShare, endTime, nowMinutes, relativeDay, today, weekdayLong } from "../../lib/dates";
 import { typeOf } from "../../lib/taskTypes";
 import { useAgent } from "../chat/agentStore";
 import { MoveMenu } from "./MoveMenu";
@@ -12,6 +12,7 @@ import { MoveMenu } from "./MoveMenu";
 import "./checklist.css";
 
 const RESOURCE_ICONS = { video: PlayCircle, book: BookOpen, doc: FileText, article: FileText, note: StickyNote, link: Link2 };
+const NEARBY = new Set(["Today", "Tomorrow", "Yesterday"]);
 
 export function TaskSheet({ taskId, onClose, onAskAgent }: { taskId: number | null; onClose: () => void; onAskAgent: () => void }) {
   const { data: task } = useTask(taskId);
@@ -23,6 +24,9 @@ export function TaskSheet({ taskId, onClose, onAskAgent }: { taskId: number | nu
   const Icon = kind.icon;
   const done = task.status === "done";
   const end = task.start ? endTime(task.start, task.duration_min) : null;
+  const near = task.date ? relativeDay(task.date) : null;
+  const dateNote = task.date ? (NEARBY.has(near!) ? near : dayMonth(task.date)) : null;
+  const progress = task.date === today() ? elapsedShare(task.start, task.duration_min, nowMinutes()) : 0;
 
   const askForResources = () => {
     send(`Find good resources for #${task.id} "${task.title}" and save the best ones to it.`);
@@ -39,9 +43,33 @@ export function TaskSheet({ taskId, onClose, onAskAgent }: { taskId: number | nu
           <button className="icon-btn secondary" aria-label="Close" onClick={onClose}><X size={20} /></button>
         </header>
 
+        {/* the reference's "Mondays" card: day, kind, Start/End numerals, duration pill, tick ruler */}
+        <div className="time-card tabular">
+          <div className="head">
+            <span className="day">
+              {task.date ? weekdayLong(task.date) : "Unscheduled"}
+              {dateNote && <span className="date"> · {dateNote}</span>}
+            </span>
+            <span className="kind"><Icon size={12} strokeWidth={2.25} aria-hidden="true" />{kind.label}</span>
+          </div>
+          {task.start ? (
+            <>
+              <div className="labels" aria-hidden="true"><span>Start</span>{end && <span>End</span>}</div>
+              <div className="when">
+                <span className="t"><span className="visually-hidden">Starts </span>{task.start}</span>
+                <span className="track">{task.duration_min ? <DurPill minutes={task.duration_min} /> : null}</span>
+                {end ? <span className="t"><span className="visually-hidden">ends </span>{end}</span> : <span />}
+              </div>
+            </>
+          ) : task.duration_min ? (
+            <div className="when only"><DurPill minutes={task.duration_min} /><span className="muted-inline">Anytime</span></div>
+          ) : (
+            <p className="muted-inline">Anytime</p>
+          )}
+          <span className="ruler" aria-hidden="true" style={{ "--progress": progress } as CSSProperties} />
+        </div>
+
         <dl className="facts tabular">
-          <div><dt>When</dt><dd>{task.date ? relativeDay(task.date) : "Unscheduled"}{task.start ? `, ${task.start}${end ? `–${end}` : ""}` : ""}</dd></div>
-          {task.duration_min && <div><dt>Duration</dt><dd>{formatDuration(task.duration_min)}</dd></div>}
           <div><dt>Type</dt><dd>{kind.label}</dd></div>
           <div><dt>Priority</dt><dd className="cap">{task.priority}</dd></div>
           {task.tags.length > 0 && <div><dt>Tags</dt><dd>{task.tags.map((t) => <span key={t} className="chip">#{t}</span>)}</dd></div>}
@@ -74,7 +102,14 @@ export function TaskSheet({ taskId, onClose, onAskAgent }: { taskId: number | nu
                   <li key={r.id} className="resource-row">
                     <RIcon size={18} strokeWidth={1.75} aria-hidden="true" />
                     <span className="resource-text">
-                      {r.url ? <a href={r.url} target="_blank" rel="noreferrer">{r.title}</a> : <span>{r.title}</span>}
+                      {r.url ? (
+                        <a href={r.url} target="_blank" rel="noreferrer">
+                          {r.title}
+                          <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
+                        </a>
+                      ) : (
+                        <span>{r.title}</span>
+                      )}
                       {(r.note || r.added_by === "agent") && (
                         <span className="resource-note">{r.added_by === "agent" ? "Found by the agent" : ""}{r.note && r.added_by === "agent" ? " · " : ""}{r.note}</span>
                       )}
@@ -93,7 +128,7 @@ export function TaskSheet({ taskId, onClose, onAskAgent }: { taskId: number | nu
 
         <footer className="sheet-footer">
           <MoveMenu task={task} align="start" />
-          <button className="btn btn-filled btn-large" onClick={() => void toggleDone(task)}>
+          <button className={`btn ${done ? "btn-tinted" : "btn-filled"} btn-large`} onClick={() => void toggleDone(task)}>
             {done ? "Reopen" : "Mark as done"}
           </button>
         </footer>

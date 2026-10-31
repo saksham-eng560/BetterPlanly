@@ -1,4 +1,4 @@
-/* ---------- checkbox (Reminders style) ---------- */
+/* ---------- checkbox (Reminders circle on glass: checked = tint fill with an ink check) ---------- */
 
 .checkbox {
   position: relative;
@@ -13,9 +13,9 @@
 .checkbox input {
   position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer;
 }
-.checkbox svg { width: 22px; height: 22px; overflow: visible; }
+.checkbox svg { width: 22px; height: 22px; overflow: visible; transition: transform var(--dur-press) var(--ease-out); }
 .checkbox-sm svg { width: 20px; height: 20px; }
-.checkbox .ring { fill: none; stroke: var(--label-tertiary); stroke-width: 1.5; transition: stroke var(--dur-fast) ease; }
+.checkbox .ring { fill: none; stroke: var(--check-ring); stroke-width: 1.75; transition: stroke var(--dur-hover) ease; }
 .checkbox .fill {
   fill: var(--check);
   transform: scale(0.6);
@@ -24,7 +24,7 @@
   transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-fast) ease;
 }
 .checkbox .mark {
-  fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;   /* L4: ink on tint */
   stroke-dasharray: 16; stroke-dashoffset: 16;
   transition: stroke-dashoffset var(--dur-base) var(--ease-out) 60ms;
 }
@@ -32,48 +32,70 @@
 .checkbox input:checked + svg .mark { stroke-dashoffset: 0; }
 .checkbox input:checked + svg .ring { stroke: transparent; }
 .checkbox:active svg { transform: scale(0.92); }
-.checkbox svg { transition: transform var(--dur-press) var(--ease-out); }
-.checkbox input:focus-visible + svg { outline: 3px solid color-mix(in srgb, var(--accent) 50%, transparent); outline-offset: 2px; border-radius: 50%; }
+.checkbox input:focus-visible + svg { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 50%; }
 @media (hover: hover) and (pointer: fine) {
   .checkbox:hover .ring { stroke: var(--check); }
+}
+@media (forced-colors: active) {
+  .checkbox .fill { fill: Highlight; }
+  .checkbox .mark { stroke: HighlightText; }
+  .checkbox .ring { stroke: CanvasText; }
 }
 @media (prefers-reduced-motion: reduce) {
   .checkbox .fill { transform: none; }
   .checkbox:active svg { transform: none; }
 }
 
-/* ---------- popover ---------- */
+/* ---------- duration pill: the reference's dark "◷ 2h" (ink-based, so it reads on any tint) ---------- */
+
+.dur-pill {
+  display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--ink) 45%, transparent); box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.18);
+  font-size: var(--text-caption1); font-weight: 600; line-height: 1.35; letter-spacing: 0; color: var(--label);
+  white-space: nowrap;
+}
+
+/* ---------- popover (portalled, fixed; + .glass-thick) ---------- */
 
 .popover-anchor { position: relative; }
 .popover {
-  position: absolute;
-  top: calc(100% + var(--s2));
+  position: fixed;
   z-index: 40;
-  min-width: 15rem;
-  padding: var(--s1);
-  border-radius: var(--r-md);
-  box-shadow: var(--shadow-float);
+  min-width: 15rem; max-width: calc(100vw - 16px);
+  padding: 6px;
+  border-radius: var(--r-popover);
+  color: var(--label);
   font-size: var(--text-subhead);
 }
-.popover-end { right: 0; transform-origin: top right; }
-.popover-start { left: 0; transform-origin: top left; }
+/* inside a sheet: the sheet already blurs, and blurs never nest → the thick tier's opaque twin */
+.popover.popover-nested {
+  --_bg: var(--solid-thick);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
 
 .menu { display: grid; gap: 1px; }
 .menu-item {
   display: flex; align-items: center; gap: var(--s3);
   width: 100%; min-height: 2.25rem; padding: var(--s2) var(--s3);
-  border: 0; border-radius: var(--r-xs); background: transparent;
+  border: 0; border-radius: 14px;   /* popover 20 − padding 6 = 14, concentric */
+  background: transparent; color: var(--label);
   text-align: left; cursor: pointer;
 }
 .menu-item svg { color: var(--label-secondary); flex: none; }
 .menu-item .hint { margin-left: auto; color: var(--label-secondary); font-size: var(--text-footnote); }
 @media (hover: hover) and (pointer: fine) {
-  .menu-item:hover { background: var(--accent); color: var(--on-accent); }
-  .menu-item:hover svg, .menu-item:hover .hint { color: var(--on-accent); }
+  /* the accent is white, so the highlight is a white pill with ink */
+  .menu-item:hover { background: #fff; color: var(--ink); }
+  .menu-item:hover svg, .menu-item:hover .hint { color: rgb(11 16 32 / 0.62); }
+}
+.menu-item:focus-visible { outline-offset: -2px; }
+@media (pointer: coarse) {
+  .menu-item { min-height: 2.75rem; }
 }
 .menu-separator { height: 0.5px; margin: var(--s1) var(--s3); background: var(--separator); }
+.menu .field { margin-top: 2px; }
 
-/* ---------- sheet ---------- */
+/* ---------- sheet (native <dialog> + .glass-thick; never set background here) ---------- */
 
 .sheet {
   width: min(32rem, calc(100vw - 2 * var(--s4)));
@@ -81,31 +103,36 @@
   padding: 0;
   border: 0;
   border-radius: var(--r-xl);
-  background: var(--bg-elevated);
   color: var(--label);
-  box-shadow: var(--shadow-float);
   overflow: hidden;
+  contain: layout;   /* the containing block for popovers portalled into it, with or without blur */
   opacity: 1;
   transform: scale(1);
-  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out),
-    overlay var(--dur-fast) allow-discrete, display var(--dur-fast) allow-discrete;
+  transition: opacity var(--dur-sheet) var(--ease-out), transform var(--dur-sheet) var(--ease-out),
+    overlay var(--dur-exit) allow-discrete, display var(--dur-exit) allow-discrete;
 }
 .sheet-wide { width: min(40rem, calc(100vw - 2 * var(--s4))); }
-.sheet:not([open]) { opacity: 0; transform: scale(0.98); transition-duration: 120ms; }
+/* desktop: pinned near the top, so a tab switch that changes the height never moves the sheet */
+@media (min-width: 641px) {
+  .sheet { margin: min(12vh, 6rem) auto auto; max-height: min(48rem, calc(100dvh - min(12vh, 6rem) - var(--s8))); }
+}
+.sheet:not([open]) { opacity: 0; transform: scale(0.98); transition-duration: var(--dur-exit); }
 @starting-style {
   .sheet[open] { opacity: 0; transform: scale(0.96); }
 }
+/* dim only: no second full-screen blur */
 .sheet::backdrop {
   background: var(--backdrop);
-  transition: background-color var(--dur-base) ease, overlay var(--dur-fast) allow-discrete, display var(--dur-fast) allow-discrete;
+  transition: background-color var(--dur-base) ease, overlay var(--dur-exit) allow-discrete, display var(--dur-exit) allow-discrete;
 }
 @starting-style {
   .sheet[open]::backdrop { background: transparent; }
 }
-.sheet-body { max-height: inherit; overflow: auto; padding: var(--s6); }
+.sheet-body { max-height: inherit; overflow: auto; padding: var(--s6); scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 0.32) transparent; }
 
 .sheet-header { display: flex; align-items: flex-start; gap: var(--s3); margin-bottom: var(--s5); }
-.sheet-header h2 { flex: 1; font-size: var(--text-title3); font-weight: 600; letter-spacing: -0.01em; }
+.sheet-header > .icon-btn { width: 1.875rem; height: 1.875rem; background: var(--fill-tertiary); color: var(--label-secondary); }
+.sheet-header h2 { flex: 1; font-size: var(--text-title2); font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; }
 
 @media (max-width: 640px) {
   .sheet {
@@ -117,6 +144,11 @@
     .sheet[open] { transform: translateY(100%); opacity: 1; }
   }
   .sheet-body { padding: var(--s5) var(--s4) calc(var(--s6) + env(safe-area-inset-bottom)); }
+  /* the reference panel's grabber */
+  .sheet-body::before {
+    content: ""; display: block; width: 36px; height: 5px; margin: calc(-1 * var(--s2)) auto var(--s3);
+    border-radius: var(--r-full); background: rgb(255 255 255 / 0.45);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .sheet, .sheet:not([open]) { transform: none; }

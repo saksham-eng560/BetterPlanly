@@ -65,7 +65,7 @@ Planly is a standalone system of four containers: a browser single-page app, a F
 
 ### 2.4 Operating environment
 - Backend: Python 3.12+, FastAPI, LangGraph 1.x, SQLAlchemy 2 (async, psycopg 3), PostgreSQL 16.
-- LLM: Ollama ≥ 0.4 with a tool-calling model (default `qwen2.5:7b`).
+- LLM: Ollama ≥ 0.4 with a tool-calling model (default `qwen2.5:14b`).
 - Frontend: evergreen desktop browsers (Safari 17+, Chrome 120+, Firefox 120+); usable down to 375 px width.
 - Deployment: `docker compose up`, or each part run locally.
 

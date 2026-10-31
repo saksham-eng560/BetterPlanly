@@ -1,4 +1,5 @@
-import { Check, Copy, FileUp, X } from "lucide-react";
+import { Check, Copy, Database, FileUp, Sparkles, X } from "lucide-react";
+import { motion } from "motion/react";
 import { useRef, useState } from "react";
 
 import agentPrompt from "../../../../examples/AGENT_PROMPT.md?raw";
@@ -13,6 +14,9 @@ import { type PickedFile, filesFromDrop, filesFromList } from "./collectFiles";
 import "./import.css";
 
 type Tab = "file" | "notion" | "prompt";
+
+const TABS = [["file", "Plan file", FileUp], ["notion", "Notion", Database], ["prompt", "Agent prompt", Sparkles]] as const;
+const underlineSpring = { type: "spring", duration: 0.25, bounce: 0 } as const;
 
 function Result({ result }: { result: ImportResult }) {
   return (
@@ -61,6 +65,12 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
     }
   }
 
+  const choose = (id: (typeof TABS)[number][0]) => {
+    setTab(id);
+    setErrors([]);
+    setResult(null);
+  };
+
   const upload = (files: PickedFile[]) => {
     if (!files.length) {
       setErrors(["No plan files there. Drop the .zip from Notion, or the folder it was unzipped into."]);
@@ -76,15 +86,39 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
         <button className="icon-btn secondary" aria-label="Close" onClick={onClose}><X size={20} /></button>
       </header>
 
-      <div className="segmented" role="tablist" aria-label="Import source">
-        {([["file", "Plan file"], ["notion", "Notion"], ["prompt", "Agent prompt"]] as const).map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setErrors([]); setResult(null); }}>
+      <div
+        className="segmented"
+        role="tablist"
+        aria-label="Import source"
+        onKeyDown={(e) => {
+          // WAI-ARIA tabs: arrows move between tabs (wrapping), Home/End jump to the ends
+          const step = { ArrowRight: 1, ArrowLeft: -1, Home: -TABS.length, End: TABS.length }[e.key];
+          if (step === undefined) return;
+          e.preventDefault();
+          const at = TABS.findIndex(([id]) => id === tab);
+          const next = e.key === "Home" ? 0 : e.key === "End" ? TABS.length - 1 : (at + step + TABS.length) % TABS.length;
+          choose(TABS[next][0]);
+          e.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
+        }}
+      >
+        {TABS.map(([id, label, Icon]) => (
+          <button
+            key={id}
+            id={`import-tab-${id}`}
+            role="tab"
+            aria-selected={tab === id}
+            aria-controls="import-panel"
+            tabIndex={tab === id ? 0 : -1}
+            onClick={() => choose(id)}
+          >
+            {tab === id && <motion.span layoutId="tab-underline" className="tab-underline" transition={underlineSpring} aria-hidden="true" />}
+            <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
             {label}
           </button>
         ))}
       </div>
 
-      <div className="import-pane">
+      <div className="import-pane" id="import-panel" role="tabpanel" aria-labelledby={`import-tab-${tab}`}>
         {tab === "file" && (
           <>
             <div
@@ -107,7 +141,7 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
                 <button className="btn btn-filled" disabled={busy} onClick={() => folderInput.current?.click()}>
                   {busy ? "Importing…" : "Choose Folder…"}
                 </button>
-                <button className="btn btn-gray" disabled={busy} onClick={() => input.current?.click()}>
+                <button className="btn btn-tinted" disabled={busy} onClick={() => input.current?.click()}>
                   Choose Files…
                 </button>
               </div>
@@ -168,7 +202,7 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
                 window.setTimeout(() => setCopied(false), 1600);
               }}
             >
-              {copied ? <Check size={16} strokeWidth={2.5} /> : <Copy size={16} strokeWidth={2} />}
+              {copied ? <Check size={16} strokeWidth={2.5} className="copied" /> : <Copy size={16} strokeWidth={2} />}
               {copied ? "Copied" : "Copy prompt"}
             </button>
           </div>
