@@ -15,12 +15,10 @@
 
 /* ---------- widgets: one glass window per section, like iOS widgets over the wallpaper ---------- */
 
-.widgets {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-  gap: var(--s4);
-  align-items: start;
-}
+/* masonry columns: a short widget (Missed) doesn't leave a hole beside a tall one. DOM order runs
+   down each column, so reading and tab order still match what you see. */
+.widgets { columns: 2 20rem; column-gap: var(--s4); }
+.widgets > * { break-inside: avoid; margin-bottom: var(--s4); }
 .widget {   /* + .glass-regular; tinted through --_wash, never background */
   --tint: var(--teal);
   --_wash: color-mix(in srgb, var(--tint) var(--widget-wash-amount), transparent);
@@ -69,7 +67,10 @@
 }
 .row-title { font-size: var(--text-callout); line-height: 1.3; transition: color var(--dur-base) ease; }
 .row-meta { font-size: var(--text-footnote); color: var(--label-secondary); letter-spacing: 0; }
-.row-meta[data-today] { color: var(--signal); }      /* L5: lime text, window only */
+.row-meta[data-today]::before {   /* lime marks "today" as a dot; the words stay secondary (one lime per row) */
+  content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px; vertical-align: 1px;
+  border-radius: 50%; background: var(--signal);
+}
 .row-meta[data-missed] { color: var(--red-text); }   /* L5: red text, window only */
 .row-sub { color: var(--label-secondary); }          /* informative, so secondary (L3) */
 .check-row[data-done] .row-title {
@@ -80,6 +81,8 @@
 .row-actions .icon-btn { color: var(--label-tertiary); }
 .row-actions .icon-btn[aria-expanded="true"] { color: var(--label); background: var(--lozenge); }
 @media (hover: hover) and (pointer: fine) {
+  .row-actions { opacity: 0; transition: opacity var(--dur-hover) ease; }
+  .check-row:is(:hover, :focus-within) .row-actions, .row-actions:has([aria-expanded="true"]) { opacity: 1; }
   .check-row:hover .row-actions .icon-btn { color: var(--label-secondary); }
   .row-actions .icon-btn:hover { color: var(--label); background: var(--platter-hover); }
 }

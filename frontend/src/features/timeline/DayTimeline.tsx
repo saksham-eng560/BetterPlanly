@@ -109,7 +109,7 @@ export function DayTimeline({
         <CalendarPlus size={44} strokeWidth={1.5} aria-hidden="true" />
         <h3>Nothing planned</h3>
         <p>Import a plan file or ask the agent to plan this day.</p>
-        <button className="btn btn-tinted" onClick={onImport}>Import a plan</button>
+        <button className="btn btn-filled" onClick={onImport}>Import a plan</button>
       </div>
     );
   }

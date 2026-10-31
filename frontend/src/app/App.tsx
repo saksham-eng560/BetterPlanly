@@ -65,7 +65,6 @@ export function App() {
             <span className="brand">Planly</span>
             <WeekStrip weekStart={week} selected={selected} today={today} tasks={weekTasks.data ?? []} onSelect={setSelected} />
             <div className="toolbar-actions">
-              {!isToday && <button className="btn today-btn ornament" onClick={() => setSelected(today)}>Today</button>}
               <HistoryPopover />
               <button className="btn btn-filled import-btn" aria-label="Import" onClick={() => setImportOpen(true)}>
                 <Plus size={16} strokeWidth={2.5} /> <span className="btn-label">Import</span>
@@ -87,7 +86,6 @@ export function App() {
           <div className="day-head">
             <div className="day-title">
               <h1>{isToday ? "Today" : weekdayLong(selected)}</h1>
-              {/* phones: the toolbar has no room for it, so "Today" sits beside the headline */}
               {!isToday && <button className="btn today-btn ornament" onClick={() => setSelected(today)}>Today</button>}
             </div>
             <p className="tabular">

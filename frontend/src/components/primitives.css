@@ -112,6 +112,10 @@
     overlay var(--dur-exit) allow-discrete, display var(--dur-exit) allow-discrete;
 }
 .sheet-wide { width: min(40rem, calc(100vw - 2 * var(--s4))); }
+/* desktop: pinned near the top, so a tab switch that changes the height never moves the sheet */
+@media (min-width: 641px) {
+  .sheet { margin: min(12vh, 6rem) auto auto; max-height: min(48rem, calc(100dvh - min(12vh, 6rem) - var(--s8))); }
+}
 .sheet:not([open]) { opacity: 0; transform: scale(0.98); transition-duration: var(--dur-exit); }
 @starting-style {
   .sheet[open] { opacity: 0; transform: scale(0.96); }
@@ -127,6 +131,7 @@
 .sheet-body { max-height: inherit; overflow: auto; padding: var(--s6); scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 0.32) transparent; }
 
 .sheet-header { display: flex; align-items: flex-start; gap: var(--s3); margin-bottom: var(--s5); }
+.sheet-header > .icon-btn { width: 1.875rem; height: 1.875rem; background: var(--fill-tertiary); color: var(--label-secondary); }
 .sheet-header h2 { flex: 1; font-size: var(--text-title2); font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; }
 
 @media (max-width: 640px) {

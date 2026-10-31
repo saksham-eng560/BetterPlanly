@@ -44,7 +44,7 @@ Display type (≥ 22 px, weight 300) is the only content that sits directly on t
 │ ┌ Day window (glass-regular) ────────────────────────────────────────┐   │ ticks" switch  │
 │ │ ANYTIME  [platter] [platter] [platter]                              │   │ messages       │
 │ │ [platter: Morning run 07:00–07:40 ◷ 40m]                            │   │ change cards   │
-│ │ Free · 1h 50m ┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆┆                         │   │ composer       │
+│ │ Free · 1h 50m ──────────────────────────                         │   │ composer       │
 │ │ [platter: DSA practice  09:30 ──◷ 1h 30m── 11:00  ┆┆┆ruler┆┆┆]      │   │                │
 │ │ (10:05)━━━━━━━━━━━━━━━ lime now-line ━━━━━━━━━━━━━━━━━━━━━━━━━━━     │   │                │
 │ └─────────────────────────────────────────────────────────────────────┘   │                │
@@ -54,7 +54,7 @@ Display type (≥ 22 px, weight 300) is the only content that sits directly on t
 ```
 
 - **At 1080 px and below:** the agent window becomes a drawer. The glass itself slides in from the right; it is never inside a transformed wrapper, which would cut it off from the environment. It uses the thick tier over a dimmed scrim, and opens from the sparkle ornament.
-- **At 760 px and below:** the brand, the week arrows and the toolbar Today button are hidden, and Import becomes a white circle with a plus.
+- **At 760 px and below:** the brand and the week arrows are hidden.
 - **At 480 px and below:** the drawer is full screen and near-solid, as an iOS full-screen sheet is.
 - **Sheets:** centred on desktop, bottom sheets on phones.
 
@@ -81,12 +81,12 @@ Each type has an on-glass tint. Cards use it as a solid glyph disc (ink icon), a
 | Component | As built |
 |---|---|
 | Week strip | The reference's pill nav, as a thin-glass capsule. A glass lozenge slides to the selected day (`layoutId="day-lozenge"`), a lime dot marks today, and grey dots mark days with tasks. |
-| Toolbar | The brand, the week strip, History as a glass-circle ornament, and **Import** as a white pill. It is a sticky thin-glass band. |
+| Toolbar | The brand, the week strip, History as a glass-circle ornament, and **Import** as a white pill (a white circle with a plus at 1080 px and below). At rest it floats on the environment, with the reeds running to the top edge as in the reference. Its thin-glass edge fades in over the first 3rem of scroll (scroll-driven animation; browsers without it keep the edge on). When another day is selected, a **Today** pill with a lime dot appears beside the headline, so the toolbar never shifts. |
 | Task card | A `<button>` platter. It shows a type disc, a title clamped to 2 lines, and badges (flag, checklist progress, resource count). Short tasks show their time range, a "◷ 40m" duration pill and the type. Timed tasks of 45 min or more show large light Start/End numerals on a hairline with the duration pill, plus a **tick ruler** along the bottom edge. On the running task the ruler's elapsed part is lime. Done cards use secondary text and a strike-through, not opacity. |
 | Now-line | A lime time capsule with a 2 px lime rule. |
-| Free gap | A "Free · 1h 50m" pill next to a faint untinted tick ruler. |
-| Widget boxes | One glass window per section (iOS widget style). Each has a solid icon disc, a title, and a large light done count, with rows as platters. A widget holds that section's tasks for the selected week and the next, plus its unscheduled ones. Open tasks come first, with "Show all" after 6. Missed tasks get their own red box, shown first. |
-| Checklist row | A 56 px min-height platter row. It has a circular checkbox (a tint ring that fills solid with an ink checkmark), title and meta, and Move / details actions. |
+| Free gap | A "Free · 1h 50m" pill on a hairline. The tick ruler is reserved for the cards. |
+| Widget boxes | One glass window per section (iOS widget style), in masonry columns so a short widget leaves no hole beside a tall one. Each has a solid icon disc, a title, and a large light done count, with rows as platters. A widget holds that section's tasks for the selected week and the next, plus its unscheduled ones. Open tasks come first, with "Show all" after 6. Missed tasks get their own red box, shown first. |
+| Checklist row | A 56 px min-height platter row. It has a circular checkbox (a tint ring that fills solid with an ink checkmark), title and meta (today's rows get a lime dot, not lime text), and Move / details actions. With a mouse, the actions appear on hover or focus, like Reminders' info button; on touch they're always shown. |
 | Move menu | A thick-glass popover, portalled to `document.body`, or into the `<dialog>` when used inside a sheet, so blurs never nest. It offers Today, Tomorrow, Next week, Pick a date… and Remove date. |
 | Task sheet | A native `<dialog>` on thick glass. A **time card** echoes the reference's frosted panel, with large Start/End numerals, the duration pill and a ruler. Below it come facts, notes, steps, resources, Move and the white **Mark as done** pill. |
 | Import sheet | Three tabs on a hairline track, with a lime underline that slides between them: Plan file, Notion and Agent prompt. The drop zone turns lime while dragging. The result banner is signal-tinted. |

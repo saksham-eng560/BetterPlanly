@@ -18,7 +18,7 @@
 .toolbar-inner {
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--s4);
   min-height: var(--toolbar-h); max-width: calc(var(--content-max) + 2 * var(--s8)); margin: 0 auto;
-  padding: var(--s2) var(--s6);
+  padding: var(--s2) var(--s8);
 }
 .brand { font-family: var(--font-rounded); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; color: var(--label-on-env); }
 .toolbar-actions { display: flex; justify-content: flex-end; align-items: center; gap: var(--s2); }
@@ -34,7 +34,7 @@
 
 /* Import = the reference's solid white pill */
 .toolbar .import-btn { min-height: var(--control-h); padding: 0 var(--s4) 0 var(--s3); gap: 6px; }
-/* "Today" (another day selected) = ornament pill with a lime dot */
+/* "Today" (another day selected) = ornament pill with a lime dot, beside the headline so the toolbar never shifts */
 .today-btn { min-height: var(--control-h); padding: 0 var(--s4) 0 var(--s3); gap: 6px; color: var(--label); }
 .today-btn::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); }
 
@@ -49,7 +49,6 @@
 /* day header: display type straight on the environment's top band (L2) */
 .day-head { margin-bottom: calc(-1 * var(--s3)); }
 .day-title { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
-.day-title .today-btn { display: none; }
 .day-head h1 {
   font-family: var(--font-display); font-size: var(--text-display-xl); font-weight: var(--w-light);
   letter-spacing: var(--track-display); line-height: 1.02; color: var(--label-on-env);
@@ -68,7 +67,7 @@
 
 /* ---------- agent: a floating window inset from the viewport edge ---------- */
 
-.inspector { min-width: 0; height: 100dvh; padding: var(--inspector-inset) var(--inspector-inset) var(--inspector-inset) 0; }
+.inspector { min-width: 0; height: 100dvh; padding: var(--s2) var(--inspector-inset) var(--inspector-inset) 0; }   /* top lines up with the toolbar */
 .inspector .chat { border-radius: var(--r-xl); overflow: hidden; }
 .scrim { display: none; }
 
@@ -77,6 +76,8 @@
 @media (max-width: 1080px) {
   .app { grid-template-columns: minmax(0, 1fr); }
   .toolbar .chat-toggle { display: inline-grid; }
+  .toolbar .import-btn { width: var(--control-h); padding: 0; }   /* a white circle with a plus */
+  .toolbar .btn-label { display: none; }
   .inspector {
     position: fixed; top: var(--s2); right: var(--s2); bottom: var(--s2); z-index: 30;
     width: min(var(--inspector-w), calc(100vw - 2 * var(--s2))); height: auto; padding: 0;
@@ -117,12 +118,9 @@
 
 @media (max-width: 760px) {
   .toolbar { --control-h: 2.25rem; }
-  .brand, .week-strip > .icon-btn, .toolbar .today-btn { display: none; }
+  .brand, .week-strip > .icon-btn { display: none; }
   .toolbar-inner { display: flex; justify-content: space-between; gap: var(--s1); padding: var(--s2); }
   .toolbar-actions { gap: var(--s1); }
-  .toolbar .import-btn { width: var(--control-h); padding: 0; }   /* a white circle with a plus */
-  .toolbar .btn-label { display: none; }
-  .day-title .today-btn { display: inline-flex; }
   .content { padding: var(--s4) var(--s4) var(--s16); gap: var(--s6); }
   .content > .glass-regular { border-radius: 28px; }   /* window 28 − padding 8 = platter 20 */
 }

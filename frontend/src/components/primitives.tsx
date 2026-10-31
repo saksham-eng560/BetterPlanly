@@ -44,7 +44,7 @@ export function DurPill({ minutes, label }: { minutes: number; label?: string })
   );
 }
 
-const GAP = 8;     // between trigger and panel
+const GAP = 12;    // between trigger and panel (clears the toolbar capsule)
 const MARGIN = 8;  // from the edge of the viewport (or of the dialog that hosts the panel)
 
 /** Pins a fixed panel to its trigger, below it or flipped above when it would not fit.

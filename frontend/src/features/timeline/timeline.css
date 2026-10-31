@@ -144,7 +144,7 @@
 }
 .timed .now-line .rule { height: 2px; border-radius: 1px; background: var(--signal); }
 
-/* ---------- free gap: a faint, untinted ruler with a "Free · 1h 15m" pill ---------- */
+/* ---------- free gap: a "Free · 1h 15m" pill on a hairline (the ruler is the cards' motif) ---------- */
 
 .timed .free {
   display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--s2);
@@ -154,10 +154,7 @@
   padding: 2px 8px; border-radius: var(--r-full); background: var(--fill-quaternary);
   font-size: var(--text-caption1); font-weight: 500; color: var(--label-secondary);
 }
-.timed .free::after {
-  content: ""; height: 6px;
-  background: repeating-linear-gradient(90deg, var(--label-quaternary) 0 1px, transparent 1px var(--tick-pitch)) left bottom / 100% 6px no-repeat;
-}
+.timed .free::after { content: ""; height: 1px; background: var(--separator); }
 
 /* ---------- empty day (a window too) ---------- */
 
@@ -172,6 +169,11 @@
 @media (max-width: 760px) {
   .timeline { padding: var(--s2); }
   .task-card .when .t { font-size: var(--text-title3); }
+  /* timed cards: badges drop under the title instead of squeezing it */
+  .task-card[data-size="regular"] { grid-template-rows: auto auto 1fr; }
+  .task-card[data-size="regular"] .glyph { grid-row: 1 / span 2; }
+  .task-card[data-size="regular"] .badges { grid-column: 2 / -1; grid-row: 2; padding-top: 0; }
+  .task-card[data-size="regular"] .when { grid-row: 3; }
 }
 
 @media (forced-colors: active) {
