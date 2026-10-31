@@ -61,7 +61,7 @@
 .popover {
   position: fixed;
   z-index: 40;
-  min-width: 15rem;
+  min-width: 15rem; max-width: calc(100vw - 16px);
   padding: 6px;
   border-radius: var(--r-popover);
   color: var(--label);

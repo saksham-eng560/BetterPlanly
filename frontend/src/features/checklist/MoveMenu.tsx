@@ -22,7 +22,7 @@ export function MoveMenu({ task, align = "end" }: { task: Task; align?: "start" 
       label={`Move “${task.title}”`}
       align={align}
       trigger={({ open, toggle }) => (
-        <button className="icon-btn" aria-label={`Move “${task.title}”`} aria-expanded={open} onClick={() => { setPicking(false); toggle(); }}>
+        <button className="icon-btn" aria-label={`Move “${task.title}”`} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setPicking(false); toggle(); }}>
           <CalendarDays size={18} strokeWidth={1.75} />
         </button>
       )}

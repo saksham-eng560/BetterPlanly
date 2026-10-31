@@ -65,6 +65,12 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
     }
   }
 
+  const choose = (id: (typeof TABS)[number][0]) => {
+    setTab(id);
+    setErrors([]);
+    setResult(null);
+  };
+
   const upload = (files: PickedFile[]) => {
     if (!files.length) {
       setErrors(["No plan files there. Drop the .zip from Notion, or the folder it was unzipped into."]);
@@ -80,9 +86,31 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
         <button className="icon-btn secondary" aria-label="Close" onClick={onClose}><X size={20} /></button>
       </header>
 
-      <div className="segmented" role="tablist" aria-label="Import source">
+      <div
+        className="segmented"
+        role="tablist"
+        aria-label="Import source"
+        onKeyDown={(e) => {
+          // WAI-ARIA tabs: arrows move between tabs (wrapping), Home/End jump to the ends
+          const step = { ArrowRight: 1, ArrowLeft: -1, Home: -TABS.length, End: TABS.length }[e.key];
+          if (step === undefined) return;
+          e.preventDefault();
+          const at = TABS.findIndex(([id]) => id === tab);
+          const next = e.key === "Home" ? 0 : e.key === "End" ? TABS.length - 1 : (at + step + TABS.length) % TABS.length;
+          choose(TABS[next][0]);
+          e.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
+        }}
+      >
         {TABS.map(([id, label, Icon]) => (
-          <button key={id} role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setErrors([]); setResult(null); }}>
+          <button
+            key={id}
+            id={`import-tab-${id}`}
+            role="tab"
+            aria-selected={tab === id}
+            aria-controls="import-panel"
+            tabIndex={tab === id ? 0 : -1}
+            onClick={() => choose(id)}
+          >
             {tab === id && <motion.span layoutId="tab-underline" className="tab-underline" transition={underlineSpring} aria-hidden="true" />}
             <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
             {label}
@@ -90,7 +118,7 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
         ))}
       </div>
 
-      <div className="import-pane">
+      <div className="import-pane" id="import-panel" role="tabpanel" aria-labelledby={`import-tab-${tab}`}>
         {tab === "file" && (
           <>
             <div

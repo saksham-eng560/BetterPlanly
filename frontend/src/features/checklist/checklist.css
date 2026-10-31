@@ -77,7 +77,7 @@
   color: var(--label-secondary);
   text-decoration: line-through; text-decoration-color: rgb(255 255 255 / 0.45);
 }
-.row-actions { display: flex; align-items: center; gap: var(--s1); }
+.row-actions { display: flex; align-items: center; gap: var(--s3); }   /* hit areas don't overlap */
 .row-actions .icon-btn { color: var(--label-tertiary); }
 .row-actions .icon-btn[aria-expanded="true"] { color: var(--label); background: var(--lozenge); }
 @media (hover: hover) and (pointer: fine) {

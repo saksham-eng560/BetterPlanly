@@ -44,7 +44,7 @@ function TransparencySetting() {
   return (
     <label className="history-setting">
       <span>Reduce transparency</span>
-      <input className="switch" type="checkbox" checked={reduced} onChange={(e) => setReduced(e.target.checked)} />
+      <input className="switch" type="checkbox" role="switch" checked={reduced} onChange={(e) => setReduced(e.target.checked)} />
     </label>
   );
 }
@@ -54,7 +54,7 @@ export function HistoryPopover() {
     <Popover
       label="History"
       trigger={({ open, toggle }) => (
-        <button className="icon-btn ornament" aria-label="History" aria-expanded={open} onClick={toggle}>
+        <button className="icon-btn ornament" aria-label="History" aria-haspopup="dialog" aria-expanded={open} onClick={toggle}>
           <History size={20} strokeWidth={1.75} />
         </button>
       )}

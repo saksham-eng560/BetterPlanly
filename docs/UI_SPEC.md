@@ -121,9 +121,18 @@ Each type has an on-glass tint. Cards use it as a solid glyph disc (ink icon), a
 - **Contrast is computed, not eyeballed.** The model is in [docs/design/contrast](design/contrast). Text on glass uses only white or white at 0.84. Tertiary 0.62 is for icons and decoration. Solid colours carry ink.
 - **Fallbacks.** `prefers-reduced-transparency`, the in-app Reduce transparency switch, `prefers-contrast: more`, `forced-colors` and browsers without `backdrop-filter` all switch the glass tiers to opaque twins (`--solid-*`).
   - More Contrast also dims the environment, removes the reeds, strengthens hairlines and turns the selected day solid white.
-  - Forced colours hide the environment and use system colours.
-- **Focus.** A 2 px lime ring with a 2 px offset, following border radius. Focusable elements only sit on glass or the top band.
-- **Hit targets.** At least 44 px, with icon buttons and ornaments extended by `::after`. The phone week-strip days are 30–34 × 48 px.
+  - Forced colours hide the environment and use system colours. Controls get `ButtonText` edges, switches and the selected day are redrawn in `Highlight`, and icon colours follow `CanvasText`.
+- **Focus.** A 2 px lime ring with a 2 px offset, following border radius. Fields get a solid 2 px lime halo (≥ 3:1 on glass). Focusable elements only sit on glass or the top band.
+- **Modal surfaces.**
+  - **Sheets:** native `<dialog>`.
+  - **Agent drawer (narrow windows):** while it's open, the page behind is `inert`, focus starts on Close, and Escape or the scrim closes it, returning focus to the toggle (`aria-expanded`, `aria-controls`).
+  - **Popovers:** these are `aria-haspopup="dialog"` panels. Escape, a choice, or Tab past either end closes them, and focus returns to the trigger. On a phone they clamp to the viewport.
+- **Keyboard patterns.**
+  - The Import tabs follow WAI-ARIA tabs: roving tabindex, ←/→/Home/End, and a labelled `tabpanel`.
+  - In the week strip the selected day is `aria-pressed` and today is `aria-current="date"`.
+  - Switches are `role="switch"`.
+  - Each checklist row is one tab stop for the sheet; the chevron is a pointer shortcut.
+- **Hit targets.** At least 44 px. Icon buttons, ornaments and the white Import and Send circles are extended by `::after`, and row actions are spaced so their hit areas don't overlap. The phone week-strip days are 30–34 × 48 px (above the 24 px WCAG minimum).
 - **Semantics.** Every control is a real `<button>`, `<input type="checkbox">` or `<dialog>`. Decorative rulers, lozenges and dots are `aria-hidden`. The chat log is `aria-live="polite"`, and toasts use `role="status"`.
 - **Sizing.** Text sizes are in `rem`; times use tabular numerals.
 

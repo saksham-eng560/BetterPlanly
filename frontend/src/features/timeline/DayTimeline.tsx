@@ -107,7 +107,7 @@ export function DayTimeline({
     return (
       <div className="empty-day glass-regular">
         <CalendarPlus size={44} strokeWidth={1.5} aria-hidden="true" />
-        <h3>Nothing planned</h3>
+        <h2>Nothing planned</h2>
         <p>Import a plan file or ask the agent to plan this day.</p>
         <button className="btn btn-filled" onClick={onImport}>Import a plan</button>
       </div>
@@ -147,7 +147,7 @@ export function DayTimeline({
     <section className="timeline glass-regular" aria-label="Timeline">
       {anytime.length > 0 && (
         <div className="anytime">
-          <h3 className="group-title">Anytime</h3>
+          <h2 className="group-title">Anytime</h2>
           <motion.ul className="anytime-list">
             <AnimatePresence mode="popLayout" initial={false}>
               {anytime.map((task) => (

@@ -37,7 +37,8 @@ export function WeekStrip({
             <li key={iso}>
               <button
                 className="day"
-                aria-current={isSelected ? "date" : undefined}
+                aria-pressed={isSelected}
+                aria-current={iso === today ? "date" : undefined}
                 data-today={iso === today || undefined}
                 aria-label={d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
                 onClick={() => onSelect(iso)}

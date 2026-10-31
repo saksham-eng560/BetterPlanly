@@ -239,3 +239,9 @@
     --widget-wash-amount: 0%;
   }
 }
+
+/* forced colours: the label and flag roles follow the system text colour, so icons that set
+   `color` from them don't stay white or orange on a white Canvas */
+@media (forced-colors: active) {
+  :root { --label: CanvasText; --label-secondary: CanvasText; --label-tertiary: CanvasText; --flag: CanvasText; }
+}

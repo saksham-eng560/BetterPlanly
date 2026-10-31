@@ -174,7 +174,10 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; text-decoratio
   cursor: pointer;
   transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-hover) ease, color var(--dur-hover) ease;
 }
-.icon-btn::after { content: ""; position: absolute; inset: min(0px, calc((100% - var(--hit)) / 2)); }
+.icon-btn::after, .toolbar .import-btn::after, .send::after {   /* 44 px hit area around small circles */
+  content: ""; position: absolute; inset: min(0px, calc((100% - var(--hit)) / 2));
+}
+.toolbar .import-btn, .send { position: relative; }
 .icon-btn:active { transform: scale(0.94); }
 .icon-btn.secondary { color: var(--label-secondary); }
 .icon-btn:not(.ornament):is([aria-pressed="true"], [aria-expanded="true"]) { background: var(--lozenge); }
@@ -195,7 +198,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; text-decoratio
 .field::placeholder { color: var(--label-secondary); }   /* placeholders must pass 4.5:1 */
 .field:focus {
   outline: none;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.40), 0 0 0 3px color-mix(in srgb, var(--signal) 45%, transparent);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.40), 0 0 0 2px var(--focus);   /* solid: ≥ 3:1 on glass (1.4.11) */
 }
 .field:disabled { color: var(--label-tertiary); }
 input[type="date"].field { color-scheme: dark; }
@@ -384,6 +387,12 @@ input[type="date"].field { color-scheme: dark; }
     -webkit-backdrop-filter: none; backdrop-filter: none;
   }
   :root .toolbar::before { background: Canvas; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  /* controls drawn with fills alone lose their shape: give them system-colour edges */
+  :is(.btn, .icon-btn, .task-card, .field, .send, .week-strip .day) { border: 1px solid ButtonText; }
+  .switch { forced-color-adjust: none; background: Canvas; border: 1px solid CanvasText; }
+  .switch::after { background: CanvasText; box-shadow: none; }
+  .switch:checked { background: Highlight; }
+  .switch:checked::after { background: HighlightText; }
 }
 
 /* reduced motion: drop movement, keep opacity/colour changes (motion handles its own via MotionConfig) */

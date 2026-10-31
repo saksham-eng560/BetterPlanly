@@ -103,10 +103,10 @@ export function ChatPanel({ state, onClose }: { state: AppState | undefined; onC
         </div>
         <label className="react-toggle">
           <span>React to ticks</span>
-          <input className="switch" type="checkbox" checked={reactToChanges} onChange={(e) => setReactToChanges(e.target.checked)} />
+          <input className="switch" type="checkbox" role="switch" checked={reactToChanges} onChange={(e) => setReactToChanges(e.target.checked)} />
         </label>
         {onClose && (
-          <button className="icon-btn secondary" aria-label="Close agent" onClick={onClose}><X size={20} /></button>
+          <button className="icon-btn secondary" aria-label="Close agent" data-drawer-close onClick={onClose}><X size={20} /></button>
         )}
       </header>
 

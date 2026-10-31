@@ -76,7 +76,7 @@ function Row({ task, tint, today, onOpen }: { task: Task; tint: string; today: s
       </button>
       <div className="row-actions">
         <MoveMenu task={task} />
-        <button className="icon-btn secondary" aria-label={`Details and resources for “${task.title}”`} onClick={() => onOpen(task)}>
+        <button className="icon-btn secondary" tabIndex={-1} aria-label={`Details and resources for “${task.title}”`} onClick={() => onOpen(task)}>
           <ChevronRight size={18} strokeWidth={2} />
         </button>
       </div>
@@ -102,9 +102,11 @@ function Widget({ title, tasks, today, onOpen }: { title: string; tasks: Task[];
       <header className="widget-head">
         <span className="widget-icon" aria-hidden="true"><Icon size={16} strokeWidth={2.25} /></span>
         <h3>{title}</h3>
-        <span className="widget-count tabular" aria-label={`${done} of ${tasks.length} done`}>
+        <span className="widget-count tabular" aria-hidden="true">
           {title === MISSED ? tasks.length : `${done}/${tasks.length}`}
         </span>
+        {/* announce what the count means, in words that match what it shows */}
+        <span className="visually-hidden">{title === MISSED ? `${tasks.length} missed` : `${done} of ${tasks.length} done`}</span>
       </header>
       <ul className="widget-list">
         <AnimatePresence initial={false}>

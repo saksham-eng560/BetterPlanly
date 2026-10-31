@@ -62,7 +62,8 @@ function place(anchor: HTMLElement, panel: HTMLElement, host: HTMLElement, align
   const s = panel.style;
   s.top = below ? `${a.bottom + GAP - box.top}px` : "auto";
   s.bottom = below ? "auto" : `${box.bottom - a.top + GAP}px`;
-  s.left = end ? "auto" : `${Math.max(MARGIN, a.left - box.left)}px`;
+  // when neither edge fits (a wide panel on a phone), keep the whole panel on screen
+  s.left = end ? "auto" : `${Math.max(MARGIN, Math.min(a.left - box.left, box.width - MARGIN - w))}px`;
   s.right = end ? `${Math.max(MARGIN, box.right - a.right)}px` : "auto";
   s.transformOrigin = `${below ? "top" : "bottom"} ${end ? "right" : "left"}`;
 }
@@ -91,6 +92,11 @@ export function Popover({
     if (!open) setHost(root.current?.closest("dialog") ?? document.body);
     setOpen(!open);
   };
+  /** Close and hand focus back to the trigger (a choice was made, Escape, or Tab left the panel). */
+  const dismiss = () => {
+    setOpen(false);
+    root.current?.querySelector<HTMLElement>("button")?.focus();
+  };
 
   useLayoutEffect(() => {
     const anchor = root.current;
@@ -116,10 +122,25 @@ export function Popover({
       if (!inside(e.target)) close();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      e.preventDefault(); // close the menu, not the sheet around it
-      close();
-      root.current?.querySelector<HTMLElement>("button")?.focus();
+      if (e.key === "Escape") {
+        e.preventDefault(); // close the menu, not the sheet around it
+        dismiss();
+        return;
+      }
+      // the panel is portalled to the end of the page, so Tab past either end would wander off:
+      // close and return to the trigger instead, from where Tab carries on in page order
+      const el = panel.current;
+      if (e.key !== "Tab" || !el || !el.contains(document.activeElement)) return;
+      const items = [...el.querySelectorAll<HTMLElement>("button:not(:disabled), a[href], input:not(:disabled)")];
+      const edge = e.shiftKey ? items[0] : items[items.length - 1];
+      if (document.activeElement === edge) {
+        e.preventDefault();
+        dismiss();
+      }
+    };
+    // focus that leaves for another control (not a click on the panel's own padding) closes it too
+    const onFocusOut = (e: FocusEvent) => {
+      if (e.relatedTarget instanceof Node && !inside(e.relatedTarget)) close();
     };
     // scrolling the page, main column or sheet under it closes it (like a macOS menu). Only a scroll
     // that actually moved the trigger counts: scroll events arrive a frame late, so the scroll that
@@ -133,11 +154,13 @@ export function Popover({
     };
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
+    document.addEventListener("focusout", onFocusOut);
     document.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", close);
     return () => {
       document.removeEventListener("pointerdown", onPointer);
       document.removeEventListener("keydown", onKey);
+      document.removeEventListener("focusout", onFocusOut);
       document.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", close);
     };
@@ -161,7 +184,7 @@ export function Popover({
                 exit={{ opacity: 0, transform: "scale(0.98)", transition: { duration: 0.12 } }}
                 transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
               >
-                {children(() => setOpen(false))}
+                {children(dismiss)}
               </motion.div>
             )}
           </AnimatePresence>,
