@@ -50,7 +50,7 @@ function ToastPill({ toast }: { toast: Toast }) {
   return (
     <motion.div
       layout
-      className={`toast material-thick${toast.tone === "error" ? " error" : ""}`}
+      className={`toast glass-thick${toast.tone === "error" ? " error" : ""}`}
       role="status"
       initial={{ opacity: 0, transform: "translateY(100%) scale(0.96)" }}
       animate={{ opacity: 1, transform: "translateY(0%) scale(1)" }}

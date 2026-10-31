@@ -11,6 +11,7 @@
   pointer-events: none;
 }
 
+/* + .glass-thick: a one-line capsule on the thick tier */
 .toast {
   pointer-events: auto;
   display: flex;
@@ -20,16 +21,19 @@
   min-height: 2.75rem;
   padding: var(--s1) var(--s2) var(--s1) var(--s5);
   border-radius: var(--r-full);
-  box-shadow: var(--shadow-float);
+  color: var(--label);
   font-size: var(--text-subhead);
 }
-
+.toast .btn-plain { font-weight: 600; }
 .toast-message {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.toast.error .toast-message { color: var(--red); }
-
+.toast.error::before { content: ""; flex: none; width: 8px; height: 8px; margin-right: calc(-1 * var(--s1)); border-radius: 50%; background: var(--red); }
 .toast:not(:has(button)) { padding-right: var(--s5); }
+
+/* the desktop toaster centres on the main column, not under the agent window */
+@media (min-width: 1081px) {
+  .toaster { right: var(--inspector-w); }
+}

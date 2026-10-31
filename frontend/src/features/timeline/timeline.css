@@ -1,93 +1,179 @@
-/* ---------- week strip ---------- */
+/* ---------- week strip: the reference's pill nav as a glass capsule (ornament on the toolbar edge) ---------- */
 
-.week-strip { display: flex; align-items: center; gap: var(--s1); }
+.week-strip {
+  display: flex; align-items: center; gap: 2px;
+  height: var(--ornament-h); padding: 4px; border-radius: var(--r-full);
+}
+.week-strip > .icon-btn { width: 2rem; height: 2rem; color: var(--label-secondary); }
 .week-strip ol { display: flex; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .week-strip .day {
-  display: grid; justify-items: center; gap: 2px;
-  width: 2.75rem; padding: var(--s1) 0 3px;
-  border: 0; border-radius: var(--r-sm); background: transparent; cursor: pointer;
-  transition: background-color var(--dur-fast) ease, transform var(--dur-press) var(--ease-out);
+  position: relative; isolation: isolate;   /* keeps the z-index:-1 lozenge above the capsule fill */
+  display: grid; justify-items: center; align-content: start; gap: 1px;
+  width: 2.75rem; height: 3rem; padding: 5px 0 0;
+  border: 0; border-radius: var(--r-full); background: transparent; color: var(--label);
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-hover) ease;
 }
 .week-strip .day:active { transform: scale(0.96); }
-.week-strip .dow { font-size: var(--text-caption2); font-weight: 600; color: var(--label-secondary); letter-spacing: 0.02em; }
-.week-strip .num {
-  display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%;
-  font-size: var(--text-subhead); font-weight: 500;
-  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
-}
-.week-strip .day[data-today] .num { color: var(--accent); font-weight: 700; }
-.week-strip .day[aria-current="date"] .num { background: var(--label); color: var(--bg); }
-.week-strip .day[aria-current="date"][data-today] .num { background: var(--accent); color: var(--on-accent); }
-.week-strip .dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; }
+.week-strip .dow { font-size: var(--text-caption2); font-weight: 600; letter-spacing: 0.02em; color: var(--label-secondary); }
+.week-strip .num { font-size: var(--text-subhead); font-weight: 500; line-height: 1.25; }
+.week-strip .dot { width: 4px; height: 4px; margin-top: 1px; border-radius: 50%; background: transparent; }
 .week-strip .dot[data-on] { background: var(--label-tertiary); }
+.week-strip .day[data-today] .dot { width: 5px; height: 5px; margin-top: 0.5px; background: var(--signal); }   /* lime = today, always */
+.week-strip .lozenge {
+  position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+  background: var(--lozenge); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+}
+.week-strip .day[aria-current="date"] .num { font-weight: 700; }
 @media (hover: hover) and (pointer: fine) {
-  .week-strip .day:hover { background: var(--fill-quaternary); }
+  .week-strip .day:not([aria-current="date"]):hover { background: var(--platter-hover); }
+}
+@media (prefers-contrast: more) {
+  .week-strip .day[aria-current="date"] :is(.num, .dow) { color: var(--ink); }
+}
+@media (max-width: 760px) {
+  .week-strip { height: 3.25rem; padding: 2px; }
+  .week-strip .day { width: 2.125rem; }
+}
+@media (max-width: 400px) {
+  .week-strip .day { width: 2rem; }
+}
+@media (max-width: 374px) {
+  .week-strip .day { width: 1.875rem; }
 }
 
-/* ---------- task card ---------- */
+/* ---------- day window ---------- */
+
+.timeline { display: grid; gap: var(--s2); padding: var(--win-pad); border-radius: var(--r-xl); }   /* + .glass-regular */
+.anytime .group-title { padding: var(--s2) var(--s3); }
+.anytime-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: var(--s2);
+  margin: 0 0 var(--s2); padding: 0; list-style: none;
+}
+.timed { display: grid; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
+.timed .slot { display: block; }   /* no time gutter: the times live in the card */
+.anytime-list > li { display: grid; }   /* cards in a row share its height */
+
+/* ---------- task card = platter (no blur), tinted by its type ---------- */
 
 .task-card {
   --tint: var(--type-other);
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: start;
-  gap: var(--s3);
-  width: 100%;
-  min-height: 3.75rem;
-  padding: var(--s3) var(--s4) var(--s3) var(--s3);
-  border: 0;
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--tint) 13%, var(--bg-grouped-secondary));
-  box-shadow: inset 3px 0 0 var(--tint), var(--shadow-card);
-  text-align: left;
-  cursor: pointer;
-  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-fast) ease, opacity var(--dur-base) ease;
+  --_wash: color-mix(in srgb, var(--tint) var(--tint-wash-amount), transparent);
+  position: relative;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start;
+  column-gap: var(--s3); row-gap: var(--s1);
+  width: 100%; min-height: 3.75rem; padding: var(--s3) var(--s4) var(--s3) var(--s3);
+  border: 0; border-radius: var(--r-md);
+  text-align: left; color: var(--label); cursor: pointer;
+  background-color: var(--platter);
+  background-image: linear-gradient(var(--_wash), var(--_wash));
+  box-shadow: var(--platter-edge);
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-hover) ease;
 }
+.task-card[data-size="regular"] { grid-template-rows: auto 1fr; padding-bottom: calc(var(--s3) + var(--ruler-h) + 4px); }
 .task-card:active { transform: scale(0.985); }
 @media (hover: hover) and (pointer: fine) {
-  .task-card:hover { background: color-mix(in srgb, var(--tint) 19%, var(--bg-grouped-secondary)); }
+  .task-card:hover { background-color: var(--platter-hover); }
 }
-.task-card .glyph {
-  display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-left: var(--s1);
-  border-radius: 50%; color: var(--tint); background: color-mix(in srgb, var(--tint) 18%, transparent);
+
+.task-card .glyph {   /* L4: ink on a solid tint */
+  grid-row: span 2; display: grid; place-items: center;
+  width: 1.75rem; height: 1.75rem; border-radius: 50%;
+  background: var(--tint); color: var(--ink);
 }
-.task-card .body { display: grid; gap: 2px; min-width: 0; }
-.task-card .title { font-size: var(--text-headline); font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
-.task-card .meta { font-size: var(--text-footnote); color: var(--label-secondary); letter-spacing: 0; }
-.task-card .badges { display: flex; align-items: center; gap: var(--s2); padding-top: 3px; color: var(--label-secondary); }
-.task-card .badge { display: inline-flex; align-items: center; gap: 3px; font-size: var(--text-caption1); font-weight: 600; }
-.task-card .flag { color: var(--orange); }
-.task-card[data-done] { opacity: 0.55; }
-.task-card[data-done] .title { color: var(--label-secondary); }
-.task-card[data-done] .glyph { color: var(--on-accent); background: var(--tint); }
+.task-card .title {
+  font-size: var(--text-headline); font-weight: 600; line-height: 1.3; padding-top: 2px; overflow-wrap: anywhere;
+  /* long imported titles: two lines on the card, the sheet shows the rest (the aria-label has it all) */
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+.task-card .badges {
+  display: flex; align-items: center; gap: var(--s2); padding-top: 5px;
+  font-size: var(--text-caption1); font-weight: 600; color: var(--label-secondary); white-space: nowrap;
+}
+.task-card .badge { display: inline-flex; align-items: center; gap: 3px; }
+.task-card .kind { font-weight: 500; }   /* the reference's "ıl Beginners" chip, as plain text */
+.task-card .flag { color: var(--flag); flex: none; }
+.task-card .meta {
+  grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  font-size: var(--text-footnote); color: var(--label-secondary);
+}
 
-/* ---------- timeline ---------- */
+/* regular (timed, ≥ 45 min): Start/End in large light numerals + duration pill on a hairline */
+.task-card .when {
+  grid-column: 2 / -1; align-self: end;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; column-gap: var(--s3);
+}
+.task-card .when .t, .time-card .t { font-weight: var(--w-light); letter-spacing: -0.01em; line-height: 1.15; }
+.task-card .when .t { font-size: var(--text-time); }
+:is(.task-card, .time-card) .track {
+  display: grid; place-items: center; height: 1.5rem;
+  background: linear-gradient(var(--separator), var(--separator)) center / 100% 1px no-repeat;
+}
 
-.timeline { display: grid; gap: var(--s5); }
-.anytime-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: var(--s2); margin: 0; padding: 0; list-style: none; }
-.timed { display: grid; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
-.timed .slot, .timed .free, .timed .now-line { display: grid; grid-template-columns: 3.25rem 1fr; gap: var(--s3); align-items: start; }
-.timed .time { padding-top: var(--s3); font-size: var(--text-footnote); font-weight: 500; color: var(--label-secondary); text-align: right; }
-.timed .free { align-items: center; }
+/* ruler: the reference's tick scale along the bottom edge; the elapsed part of the running task is lime */
+:is(.task-card, .time-card) .ruler {
+  position: absolute; left: 0; right: 0; bottom: 0; height: var(--ruler-h);
+  border-radius: 0 0 var(--r-md) var(--r-md); overflow: hidden; pointer-events: none;
+}
+:is(.task-card, .time-card) .ruler::before, :is(.task-card, .time-card) .ruler::after {
+  content: ""; position: absolute; inset: 0 var(--s3);
+  background:
+    repeating-linear-gradient(90deg, var(--_tick) 0 1px, transparent 1px var(--tick-major-every)) left bottom / 100% var(--tick-major-h) no-repeat,
+    repeating-linear-gradient(90deg, var(--_tick) 0 1px, transparent 1px var(--tick-pitch)) left bottom / 100% var(--tick-h) no-repeat;
+}
+:is(.task-card, .time-card) .ruler::before { --_tick: color-mix(in srgb, var(--tint) 55%, transparent); }
+:is(.task-card, .time-card) .ruler::after {
+  --_tick: var(--signal);
+  clip-path: inset(0 calc((1 - var(--progress, 0)) * 100%) 0 0);
+}
+
+/* done: no opacity dimming (L8) */
+.task-card[data-done] { background-image: none; }
+.task-card[data-done] .title {
+  color: var(--label-secondary);
+  text-decoration: line-through; text-decoration-color: rgb(255 255 255 / 0.45);
+}
+.task-card[data-done] .ruler { opacity: 0.35; }
+
+/* ---------- now-line: lime capsule + 2px rule ---------- */
+
+.timed .now-line { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--s2); padding: 2px 0; }
+.timed .now-line .time {
+  padding: 2px 8px; border-radius: var(--r-full); background: var(--signal); color: var(--on-signal);
+  font-size: var(--text-caption1); font-weight: 700; line-height: 1.35;
+}
+.timed .now-line .rule { height: 2px; border-radius: 1px; background: var(--signal); }
+
+/* ---------- free gap: a faint, untinted ruler with a "Free · 1h 15m" pill ---------- */
+
+.timed .free {
+  display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--s2);
+  min-height: 2rem; padding: 0 var(--s1);
+}
 .timed .free-label {
-  padding: var(--s1) var(--s3); font-size: var(--text-footnote); color: var(--label-tertiary);
-  border-left: 1.5px dashed var(--separator); margin-left: var(--s4);
+  padding: 2px 8px; border-radius: var(--r-full); background: var(--fill-quaternary);
+  font-size: var(--text-caption1); font-weight: 500; color: var(--label-secondary);
 }
-.timed .now-line { align-items: center; }
-.timed .now-line .time { padding: 0; color: var(--accent); font-weight: 600; }
-.timed .now-line .rule { position: relative; height: 2px; border-radius: 1px; background: var(--accent); }
-.timed .now-line .rule::before {
-  content: ""; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+.timed .free::after {
+  content: ""; height: 6px;
+  background: repeating-linear-gradient(90deg, var(--label-quaternary) 0 1px, transparent 1px var(--tick-pitch)) left bottom / 100% 6px no-repeat;
 }
+
+/* ---------- empty day (a window too) ---------- */
 
 .empty-day {
   display: grid; justify-items: center; gap: var(--s2);
-  padding: var(--s12) var(--s4); text-align: center; color: var(--label-tertiary);
+  padding: var(--s12) var(--s4); border-radius: var(--r-xl);
+  text-align: center; color: var(--label-tertiary);
 }
 .empty-day h3 { margin-top: var(--s2); font-size: var(--text-title3); font-weight: 600; color: var(--label); }
 .empty-day p { max-width: 22rem; font-size: var(--text-subhead); color: var(--label-secondary); margin-bottom: var(--s3); }
 
-@media (max-width: 640px) {
-  .timed .slot, .timed .free, .timed .now-line { grid-template-columns: 2.75rem 1fr; gap: var(--s2); }
-  .task-card { padding: var(--s3); }
+@media (max-width: 760px) {
+  .timeline { padding: var(--s2); }
+  .task-card .when .t { font-size: var(--text-title3); }
+}
+
+@media (forced-colors: active) {
+  .timed .now-line .rule, .week-strip .day[data-today] .dot { background: Highlight; }
 }

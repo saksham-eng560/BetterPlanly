@@ -1,4 +1,5 @@
-import { Check, Copy, FileUp, X } from "lucide-react";
+import { Check, Copy, Database, FileUp, Sparkles, X } from "lucide-react";
+import { motion } from "motion/react";
 import { useRef, useState } from "react";
 
 import agentPrompt from "../../../../examples/AGENT_PROMPT.md?raw";
@@ -13,6 +14,9 @@ import { type PickedFile, filesFromDrop, filesFromList } from "./collectFiles";
 import "./import.css";
 
 type Tab = "file" | "notion" | "prompt";
+
+const TABS = [["file", "Plan file", FileUp], ["notion", "Notion", Database], ["prompt", "Agent prompt", Sparkles]] as const;
+const underlineSpring = { type: "spring", duration: 0.25, bounce: 0 } as const;
 
 function Result({ result }: { result: ImportResult }) {
   return (
@@ -77,8 +81,10 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
       </header>
 
       <div className="segmented" role="tablist" aria-label="Import source">
-        {([["file", "Plan file"], ["notion", "Notion"], ["prompt", "Agent prompt"]] as const).map(([id, label]) => (
+        {TABS.map(([id, label, Icon]) => (
           <button key={id} role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setErrors([]); setResult(null); }}>
+            {tab === id && <motion.span layoutId="tab-underline" className="tab-underline" transition={underlineSpring} aria-hidden="true" />}
+            <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
             {label}
           </button>
         ))}
@@ -107,7 +113,7 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
                 <button className="btn btn-filled" disabled={busy} onClick={() => folderInput.current?.click()}>
                   {busy ? "Importing…" : "Choose Folder…"}
                 </button>
-                <button className="btn btn-gray" disabled={busy} onClick={() => input.current?.click()}>
+                <button className="btn btn-tinted" disabled={busy} onClick={() => input.current?.click()}>
                   Choose Files…
                 </button>
               </div>
@@ -168,7 +174,7 @@ export function ImportSheet({ open, onClose, notionConfigured }: { open: boolean
                 window.setTimeout(() => setCopied(false), 1600);
               }}
             >
-              {copied ? <Check size={16} strokeWidth={2.5} /> : <Copy size={16} strokeWidth={2} />}
+              {copied ? <Check size={16} strokeWidth={2.5} className="copied" /> : <Copy size={16} strokeWidth={2} />}
               {copied ? "Copied" : "Copy prompt"}
             </button>
           </div>

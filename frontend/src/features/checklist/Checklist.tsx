@@ -17,7 +17,7 @@ const MISSED = "Missed";
 const WIDGET_TINTS = [
   "var(--indigo)", "var(--cyan)", "var(--orange)", "var(--pink)", "var(--purple)",
   "var(--mint)", "var(--teal)", "var(--brown)",
-];  // no yellow: too little contrast for a title on white
+];  // the tint marks the icon disc, checkboxes and a 5% wash; titles stay white
 
 /** A stable colour per section name, so a box keeps its colour across weeks. */
 function tintFor(section: string): string {
@@ -94,7 +94,7 @@ function Widget({ title, tasks, today, onOpen }: { title: string; tasks: Task[];
   return (
     <motion.section
       layout="position"
-      className="widget"
+      className="widget glass-regular"
       style={{ "--tint": tint } as CSSProperties}
       aria-label={title}
       transition={{ type: "spring", duration: 0.45, bounce: 0.12 }}
@@ -177,7 +177,7 @@ export function Checklist({
           ))}
         </div>
       ) : (
-        <p className="checklist-empty">Import a plan and each of its sections shows up here as its own box.</p>
+        <p className="checklist-empty glass-regular">Import a plan and each of its sections shows up here as its own box.</p>
       )}
     </section>
   );

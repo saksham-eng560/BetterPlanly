@@ -47,6 +47,18 @@ export function minutesOf(time: string): number {
   return h * 60 + m;
 }
 
+/** Minutes since local midnight. */
+export function nowMinutes(now = new Date()): number {
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+/** Share of [start, start + duration) elapsed at `now` (minutes since midnight); 0 outside it. */
+export function elapsedShare(start: string | null, duration: number | null, now: number | null): number {
+  if (now === null || !start || !duration) return 0;
+  const from = minutesOf(start);
+  return now >= from && now < from + duration ? (now - from) / duration : 0;
+}
+
 export function timeOf(minutes: number): string {
   return `${pad(Math.floor(minutes / 60) % 24)}:${pad(minutes % 60)}`;
 }

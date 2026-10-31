@@ -60,18 +60,18 @@ export function App() {
   return (
     <div className="app" data-chat-open={chatOpen || undefined}>
       <div className="main-column">
-        <header className="toolbar material">
+        <header className="toolbar">
           <div className="toolbar-inner">
             <span className="brand">Planly</span>
             <WeekStrip weekStart={week} selected={selected} today={today} tasks={weekTasks.data ?? []} onSelect={setSelected} />
             <div className="toolbar-actions">
-              {!isToday && <button className="btn btn-gray" onClick={() => setSelected(today)}>Today</button>}
+              {!isToday && <button className="btn today-btn ornament" onClick={() => setSelected(today)}>Today</button>}
               <HistoryPopover />
-              <button className="btn btn-tinted" aria-label="Import" onClick={() => setImportOpen(true)}>
-                <Plus size={16} strokeWidth={2.25} /> <span className="btn-label">Import</span>
+              <button className="btn btn-filled import-btn" aria-label="Import" onClick={() => setImportOpen(true)}>
+                <Plus size={16} strokeWidth={2.5} /> <span className="btn-label">Import</span>
               </button>
               <button
-                className="icon-btn chat-toggle"
+                className="icon-btn ornament chat-toggle"
                 aria-label="Open the agent"
                 aria-pressed={chatOpen}
                 onClick={() => setChatOpen((o) => !o)}
@@ -85,7 +85,11 @@ export function App() {
 
         <main className="content">
           <div className="day-head">
-            <h1>{isToday ? "Today" : weekdayLong(selected)}</h1>
+            <div className="day-title">
+              <h1>{isToday ? "Today" : weekdayLong(selected)}</h1>
+              {/* phones: the toolbar has no room for it, so "Today" sits beside the headline */}
+              {!isToday && <button className="btn today-btn ornament" onClick={() => setSelected(today)}>Today</button>}
+            </div>
             <p className="tabular">
               {isToday ? `${weekdayLong(selected)}, ${dayMonth(selected)}` : dayMonth(selected)}
               {dayTasks.length > 0 && ` · ${done} of ${dayTasks.length} done`}
@@ -93,9 +97,9 @@ export function App() {
           </div>
 
           {weekTasks.isLoading ? (
-            <div className="skeleton" aria-hidden="true"><span /><span /><span /></div>
+            <div className="skeleton glass-regular" aria-hidden="true"><span /><span /><span /></div>
           ) : weekTasks.isError ? (
-            <p className="load-error" role="alert">Can't reach the Planly backend. Is it running on port 8000?</p>
+            <p className="load-error glass-regular" role="alert">Can't reach the Planly backend. Is it running on port 8000?</p>
           ) : (
             <DayTimeline tasks={dayTasks} isToday={isToday} onOpen={open} onImport={() => setImportOpen(true)} />
           )}

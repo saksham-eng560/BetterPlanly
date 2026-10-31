@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { addDays, endTime, formatDuration, localNowIso, nextMonday, relativeDay, weekStart } from "./dates";
+import { addDays, elapsedShare, endTime, formatDuration, localNowIso, nextMonday, relativeDay, weekStart } from "./dates";
 import { parseSseChunk } from "./sse";
 
 describe("dates", () => {
@@ -17,6 +17,14 @@ describe("dates", () => {
     expect(formatDuration(120)).toBe("2h");
     expect(endTime("09:30", 90)).toBe("11:00");
     expect(endTime("09:30", null)).toBeNull();
+  });
+
+  it("measures how much of a running task has elapsed", () => {
+    expect(elapsedShare("10:00", 40, 10 * 60 + 10)).toBe(0.25);
+    expect(elapsedShare("10:00", 40, 9 * 60 + 59)).toBe(0); // not started
+    expect(elapsedShare("10:00", 40, 10 * 60 + 40)).toBe(0); // over: only the running task fills
+    expect(elapsedShare("10:00", null, 10 * 60 + 10)).toBe(0);
+    expect(elapsedShare("10:00", 40, null)).toBe(0); // not today
   });
 
   it("names nearby days", () => {

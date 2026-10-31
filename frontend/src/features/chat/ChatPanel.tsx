@@ -89,7 +89,7 @@ export function ChatPanel({ state, onClose }: { state: AppState | undefined; onC
 
   const reachable = state?.agent.reachable;
   return (
-    <aside className="chat material" aria-label="Planly agent">
+    <aside className="chat glass-regular" aria-label="Planly agent">
       <header className="chat-head">
         <div className="chat-title">
           <Sparkles size={18} strokeWidth={2} aria-hidden="true" />
