@@ -98,7 +98,7 @@ export function App() {
       <div className="main-column" inert={drawerOpen || undefined}>
         <header className="toolbar">
           <div className="toolbar-inner">
-            <span className="brand">Planly</span>
+            <span className="brand"><img className="brand-icon" src="/favicon.svg" alt="" width={22} height={22} />Planly</span>
             <WeekStrip weekStart={week} selected={selected} today={today} tasks={weekTasks.data ?? []} onSelect={setSelected} />
             <div className="toolbar-actions">
               <HistoryPopover />

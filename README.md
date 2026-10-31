@@ -1,6 +1,10 @@
-# Planly
+<p align="center">
+  <img src="docs/assets/icon.png" width="112" height="112" alt="Planly icon">
+</p>
 
-A personal day planner with a **local AI agent** beside your schedule.
+<h1 align="center">Planly</h1>
+
+<p align="center">A personal day planner with a <b>local AI agent</b> beside your schedule.</p>
 
 You bring tasks in from Notion, or from a plan file that any AI assistant can write. Planly lays the day out as a timeline of colour-coded tasks with a checklist underneath. A LangGraph agent running on a local Ollama model watches what you tick. When you finish early, fall behind or miss something, it re-plans the day. Every change, yours or the agent's, is stored in Postgres and can be undone.
 

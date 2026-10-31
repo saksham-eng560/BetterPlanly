@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Planly app icon: a tick on a glass tile over the app's environment (see docs/UI_SPEC.md#app-icon) -->
+  <defs>
+    <linearGradient id="env" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A4E86"/>
+      <stop offset="0.34" stop-color="#0B74AA"/>
+      <stop offset="0.7" stop-color="#B02E6E"/>
+      <stop offset="1" stop-color="#CC4F62"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.86" r="0.55">
+      <stop offset="0" stop-color="#E0705A" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#E0705A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="0.45" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="reeds" width="64" height="512" patternUnits="userSpaceOnUse">
+      <rect width="64" height="512" fill="#fff" fill-opacity="0"/>
+      <rect x="0" width="2" height="512" fill="#fff" fill-opacity="0.10"/>
+      <rect x="30" width="34" height="512" fill="#000" fill-opacity="0.07"/>
+    </pattern>
+    <clipPath id="tile"><rect width="512" height="512" rx="114"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#env)"/>
+    <rect width="512" height="512" fill="url(#glow)"/>
+    <rect width="512" height="512" fill="url(#reeds)"/>
+    <rect width="512" height="512" fill="url(#sheen)"/>
+  </g>
+  <rect x="3" y="3" width="506" height="506" rx="111" fill="none" stroke="#fff" stroke-opacity="0.22" stroke-width="6"/>
+  <!-- the tick: done; the lime dot it starts from: now -->
+  <path d="M168 270 L232 334 L360 188" fill="none" stroke="#000" stroke-opacity="0.18" stroke-width="50" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 8)"/>
+  <path d="M168 270 L232 334 L360 188" fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="168" cy="270" r="33" fill="#C6F432"/>
+</svg>
