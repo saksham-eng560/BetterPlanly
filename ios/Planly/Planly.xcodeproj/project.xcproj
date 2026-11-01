@@ -25,13 +25,9 @@
           ],
         },
       ],
-    }, {
-      "kind": "folder",
-      "path": "Shared",
-      "target-membership": [
-        "Planly",
-      ],
-    }, {
+    },
+    { "kind": "folder", "path": "Shared", "target-membership": [ "Planly" ] },
+    {
       "kind": "group",
       "name": "Products",
       "children": [
