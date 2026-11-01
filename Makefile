@@ -1,10 +1,13 @@
 # Local development. Needs Python 3.12+, Node 22, PostgreSQL 16 and (for the agent) Ollama.
 PY := backend/.venv/bin/python
 
-.PHONY: start setup db migrate backend frontend fake-ollama test e2e build up
+.PHONY: start phone setup db migrate backend frontend fake-ollama test e2e build up
 
 start:  ## run everything on this machine (installs on first run) → http://localhost:5173
 	scripts/start.sh
+
+phone:  ## like start, and serves the API on your Wi-Fi so the iPhone app (ios/) can reach it
+	PLANLY_HOST=0.0.0.0 scripts/start.sh
 
 setup:  ## create the Python venv and install both apps
 	python3 -m venv backend/.venv

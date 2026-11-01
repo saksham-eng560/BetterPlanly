@@ -3,6 +3,7 @@
 #
 #   make start                          # or: scripts/start.sh
 #   PLANLY_MODEL=qwen2.5:7b make start  # lighter model for slower machines (3b for 8 GB)
+#   make phone                          # also serve the API to your home Wi-Fi for the iPhone app
 #
 # First run installs dependencies, sets up the database and downloads the model; later runs
 # start in seconds. Ctrl-C stops everything this script started.
@@ -12,6 +13,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ENV_FILE="$ROOT/backend/.env"
 API_PORT="${PLANLY_API_PORT:-8000}"
 WEB_PORT="${PLANLY_PORT:-5173}"
+API_HOST="${PLANLY_HOST:-127.0.0.1}"  # 0.0.0.0 lets the iPhone app on your Wi-Fi reach the API (make phone)
 
 say()  { printf '\033[1m▸ %s\033[0m\n' "$*"; }
 warn() { printf '\033[33m! %s\033[0m\n' "$*"; }
@@ -148,7 +150,7 @@ if ! migration=$(.venv/bin/alembic upgrade head 2>&1); then
   die "Database migration failed (DATABASE_URL=$DB_URL)."
 fi
 
-.venv/bin/uvicorn app.main:app --port "$API_PORT" --log-level warning &
+.venv/bin/uvicorn app.main:app --host "$API_HOST" --port "$API_PORT" --log-level warning &
 PIDS="$PIDS $!"
 for _ in $(seq 1 30); do curl -sf -m 2 "http://localhost:$API_PORT/api/health" >/dev/null && break; sleep 1; done
 curl -sf -m 2 "http://localhost:$API_PORT/api/health" >/dev/null || die "The API didn't start (see the errors above)."
@@ -160,6 +162,12 @@ for _ in $(seq 1 30); do curl -sf -m 2 "http://localhost:$WEB_PORT/" >/dev/null 
 
 URL="http://localhost:$WEB_PORT"
 say "Planly is running at $URL (model: $MODEL). Press Ctrl-C to stop."
+if [ "$API_HOST" != "127.0.0.1" ] && [ "$API_HOST" != "localhost" ]; then
+  # what to type into the iPhone app: the Bonjour name survives the router handing out a new IP
+  LAN_NAME="$(scutil --get LocalHostName 2>/dev/null || hostname -s 2>/dev/null || true)"
+  LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || true)"
+  say "iPhone app: connect to http://${LAN_NAME:-your-mac}.local:$API_PORT${LAN_IP:+  (or http://$LAN_IP:$API_PORT)}"
+fi
 if [ -z "${PLANLY_NO_OPEN:-}" ]; then
   if have open; then open "$URL"; elif have xdg-open; then xdg-open "$URL" >/dev/null 2>&1 || true; fi
 fi
